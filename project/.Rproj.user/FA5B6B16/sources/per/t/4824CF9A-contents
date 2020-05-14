@@ -1,0 +1,81 @@
+f12 <- read.csv('F12.txt', header = FALSE) # load data
+f12 <- log(f12[[1]]) # take log
+
+silverman <- function(x) {
+  n <- length(x)
+  sigma_hat <- sd(x)
+  h <- ((4 / (3 * n))^(1 / 5)) * sigma_hat
+  return(h)
+}
+silverman_h <- silverman(x = f12)
+
+
+-(2 * moment_3 * v)/h^4 +
+  (moment_2 * v^2)/h^4 +
+  (4 * u * moment_2 * v)/h^4 -
+  (2 * u * moment_1 * v^2)/h^4 -
+  (2 * u^2 * moment_1 * v)/h^4 +
+  (u^2 * v^2)/h^4 +
+  moment_4/h^4 -
+  (2 * u * moment_3)/h^4 +
+  (u^2 * moment_2)/h^4 +
+  (2 * moment_1 * v)/h^2 -
+  v^2/h^2 -
+  (2 * moment_2)/h^2 +
+  (2 * u * moment_1)/h^2 -
+  u^2/h^2 + 1
+
+
+
+
+
+R.f <- function(X = f12, h_0 = silverman_h) {
+  n <- length(X)
+  A_B <- outer(X = X, Y = X, FUN = function(u, v) {
+    D <- 1 / sqrt(2 * pi * ((h_0^2) / 2))
+    H <- exp((-1 / (h_0^2)) * (((u^2 + v^2) / 2) - ((u + v) / 2)^2))
+    mean_mu <- (u + v) / 2
+    sd_sigma <- sqrt((h_0^2) / 2)
+    moment_4 <- mean_mu^4 + 3 * sd_sigma^4 + 6 * mean_mu^2 * sd_sigma^2
+    moment_3 <- mean_mu^3 + 3 * mean_mu * sd_sigma^2
+    moment_2 <- mean_mu^2 + sd_sigma^2
+    moment_1 <- mean_mu
+    B_prime <- -(2 * moment_3 * v)/h_0^4 +
+      (moment_2 * v^2)/h_0^4 +
+      (4 * u * moment_2 * v)/h_0^4 -
+      (2 * u * moment_1 * v^2)/h_0^4 -
+      (2 * u^2 * moment_1 * v)/h_0^4 +
+      (u^2 * v^2)/h_0^4 +
+      moment_4/h_0^4 -
+      (2 * u * moment_3)/h_0^4 +
+      (u^2 * moment_2)/h_0^4 +
+      (2 * moment_1 * v)/h_0^2 -
+      v^2/h_0^2 -
+      (2 * moment_2)/h_0^2 +
+      (2 * u * moment_1)/h_0^2 -
+      u^2/h_0^2 + 1
+    B <- (B_prime / D) * (H / (2 * pi))
+    B
+  })
+  
+  roughness <- (1 / ((n^2) * (h_0^6))) * sum(A_B)
+  
+  return(roughness)
+}
+
+R_K <- 1 / (2 * sqrt(pi))
+roughness_calc <- R.f(X = f12, h_0 = silverman_h)
+n <- length(f12)
+sheather_jones_MC <- (R_K / (n * roughness_calc))^(1 / 5)
+locfit::sjpi(x = f12, a = silverman_h)
+
+
+
+
+(1 / h^4) * (mu^4 + 3 * sigma^4 + 6 * mu^2 * sigma^2) -
+  (2 / h^4) * (u + v) * (mu^3 + 3 * mu * sigma^2) +
+  ((1 / h^4) * (u^2 + 4 * u * v + v^2) - (2 / h^2)) * (mu^2 + sigma^2) +
+  ((2 / h^4) * (u^2 * v + v * u^2) + (2 / h^2) * (u + v)) * (mu) -
+  (1 / (h^2)) * (u^2 + v^2) + (1 / (h^4)) * ((x^2) * (v^2))
+
+

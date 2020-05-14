@@ -1,0 +1,838 @@
+### Jared Yu
+### Computational Statistics
+### Project
+
+### Fig. 1
+# Compare frequency and density histograms
+par(mfrow = c(1,2))
+hist(faithful$waiting, main = 'Frequency Histogram of Waiting Times Between Eruptions',
+     xlab = 'Time Between Eruptions (minutes)')
+hist(faithful$waiting, main = 'Density Histogram Waiting Times Between Eruptions',
+     xlab = 'Time Between Eruptions (minutes)', freq = FALSE)
+lines(density(faithful$waiting))
+dev.off()
+
+### Fig. 2 (image from internet)
+# check histogram settings for mathisfun
+m <- 1
+h <- 50
+100 + m * h
+100 + (m + 1) * h # Confirms break points of histogram
+
+### Fig. 3
+# Compare density histograms for different number of bins
+par(mfrow = c(1,2))
+hist(faithful$waiting, main = 'Frequency Histogram of Waiting Times Between Eruptions (breaks=default)',
+     xlab = 'Time Between Eruptions (minutes)')
+hist(faithful$waiting, main = 'Frequency Histogram of Waiting Times Between Eruptions (breaks=20)',
+     xlab = 'Time Between Eruptions (minutes)', breaks = 20)
+dev.off()
+
+### Fig. 4
+### The hist_est() function plots a histogram after separating the
+### data into m intervals.
+hist_est <- function(var1 = f12, m = 30, hist_tile, hist_x_lab, line_color = 'black') {
+  var1_range <- range(var1) # range of data
+  D <- var1_range[2] - var1_range[1] # ~length D of histogram
+  v_k <- D / m # volume of bin (length of interval)
+  n <- length(var1)
+  
+  break_pts <- matrix(NA, nrow = m + 1)
+  break_pts[1] <- var1_range[1]; break_pts[m + 1] <- var1_range[2]
+  for (i in 1:(m - 1)) { 
+    break_pts[i + 1] <- var1_range[1] + i * v_k # possible bias towards right side
+  } # create (m + 1) intervals
+  break_pts <- as.vector(break_pts)
+  
+  m_bins <- matrix(0, nrow = m)
+  for (i in var1) {
+    lower_interval <- tail(which(i > break_pts), 1)
+    if (i == break_pts[1]) { # edge case for smallest value
+      m_bins[1] <- m_bins[1] + 1
+    }
+    m_bins[lower_interval] <- m_bins[lower_interval] + 1
+  } # calculate the number of obs. in each bin
+  
+  p_k <- m_bins / n # proportion per bin
+  f_hat <- p_k / v_k # est. histogram output
+  
+  # y_limits <- c(-0.05, max(f_hat_pts) + 0.5 * sd(f_hat_pts))
+  y_limits <- c(0, max(f_hat) + 1e-2)
+  # Reference: https://stackoverflow.com/questions/4785657/how-to-draw-an-empty-plot
+  plot(1, type="n", ylab= "Estimated Density", xlim = var1_range, ylim = y_limits,
+       main = paste0(hist_tile, ' (m=', m,')'),
+       xlab = hist_x_lab)
+       # main = paste0('Histogram Estimator (m=', m,')'))
+  abline(h = 0)
+  for (i in 1:length(f_hat)) {
+    lines(c(break_pts[i], break_pts[i+1]), c(f_hat[i], f_hat[i]),
+          col = line_color)
+  } # plot horizontal and vertical lines of histogram
+  segments(x0 = break_pts[-1], y0 = 0, x1 = break_pts[-1], y1 = f_hat, col = line_color)
+  segments(x0 = break_pts[-length(break_pts)],
+           y0 = 0, x1 = break_pts[-length(break_pts)], y1 = f_hat, col = line_color)
+}
+
+f12 <- read.csv('F12.txt', header = FALSE) # load data
+f12 <- log(f12[[1]]) # take log
+par(mfrow = c(3,2)) # Plot grid of histograms for different 'm' bins
+m_vec <- seq(from = 10, to = 60, length.out = 6)
+for (i in m_vec) {
+  hist_est(var1 = f12, m = i, hist_tile = 'Histogram of log F12',
+           hist_x_lab = 'log F12')
+  lines(density(f12))
+}
+dev.off()
+
+### The rec_bins() function will determine the recommended
+### number of bins to use based on the formula: 1+log_2(n)
+rec_bins <- function(x) {
+  n <- length(x)
+  1 + log2(n)
+}
+
+rec_bins(f12) # 10.2
+
+
+### Fig. 5
+### The hist_est2() function provides the estimated probability based off
+### the histogram estimate of the data. This is different
+### from hist_est which plots the histogram.
+hist_est2 <- function(x, var1 = f12, m = 30) {
+  var1_range <- range(var1) # range of data
+  
+  # Check if x outside range of f-hat
+  if ((x > var1_range[2]) | (x < var1_range[1])) {
+    return(0)
+  }
+  
+  D <- var1_range[2] - var1_range[1] # ~length D of histogram
+  v_k <- D / m # volume of bin (length of interval)
+  n <- length(var1)
+  
+  break_pts <- matrix(NA, nrow = m + 1)
+  break_pts[1] <- var1_range[1]; break_pts[m + 1] <- var1_range[2]
+  for (i in 1:(m - 1)) { 
+    break_pts[i + 1] <- var1_range[1] + i * v_k # possible bias towards right side
+  } # create (m + 1) intervals
+  break_pts <- as.vector(break_pts)
+  
+  m_bins <- matrix(0, nrow = m)
+  for (i in var1) {
+    lower_interval <- tail(which(i > break_pts), 1)
+    m_bins[lower_interval] <- m_bins[lower_interval] + 1
+  } # calculate the number of obs. in each bin
+  
+  p_k <- m_bins / n # proportion per bin
+  f_hat <- p_k / v_k # est. histogram output
+  kth_bin <- tail(which(x >= break_pts), 1) # x's bin
+  
+  if ((kth_bin >= 1) & (kth_bin <= m)) {
+    return(f_hat[kth_bin]) # return f-hat
+  } else if (kth_bin == (m + 1)) {
+    return(f_hat[m]) # edge case for last bin, return m'th bin
+  } else {
+    return(0)
+  }
+}
+
+# vectorize the x argument
+hist_est2_vec <- Vectorize(hist_est2, vectorize.args = c("x"))
+xs <- seq(-3, 1.5, length.out = 1e4) # Plot the estimated histogram
+plot(xs, hist_est2_vec(x = xs, var1 = f12, m = 40),
+     type = 'l', main = 'Histogram Estimator and K.D.E. for log F12',
+     xlab = 'log F12', ylab = 'Estimated Density')
+lines(density(f12), lty = 2, col = 'red') # Add KDE for comparison
+legend("topleft", legend = c('Histogram Estimator', 'K.D.E.'),
+       lty = c(1,2), col = c('black', 'red'))
+dev.off()
+
+### Fig. 7
+normal <- function(z) { # Normal kernel
+  dnorm(z)
+}
+
+uniform <- function(z) { # Uniform kernel
+  ifelse(abs(z) < 1, 1 / 2, 0)
+}
+
+epanechnikov <- function(z) { # Epanechnikov kernel
+  ifelse(abs(z) < 1, (3 / 4) * (1 - z^2), 0)
+}
+
+triweight <- function(z) { # Triweight kernel
+  ifelse(abs(z) < 1, (35 / 32) * ((1 - z^2)^3), 0)
+}
+
+# Silverman's rule of thumb
+### The silverman function uses Silverman's rule of thumb
+### for calculating the bandwidth.
+silverman <- function(x) {
+  n <- length(x)
+  sigma_hat <- sd(x)
+  h <- ((4 / (3 * n))^(1 / 5)) * sigma_hat
+  return(h)
+}
+silverman_h <- silverman(x = f12)
+
+# Sheather-Jones bandwidth using {locfit} package
+sheather_jones_h <- locfit::sjpi(f12, silverman_h)[1]
+
+# Terrell's maximal smoothing principle
+### The maximal_smoothing_principle calculates the bandwidth
+### using the method developed by Terrell that calculates
+### the maximal smoothing principle.
+maximal_smoothing_principle <- function(x) {
+  n <- length(x)
+  sigma_hat <- sd(x)
+  R_K <- 1 / (2 * sqrt(pi))
+  terrell_h <- 3 * ((R_K / (35 * n))^(1 / 5)) * sigma_hat
+  return(terrell_h)
+}
+
+terrell_h <- maximal_smoothing_principle(x = f12)
+
+### f_hat is the function that calculates the KDE estimate
+### for a given x on the x-axis for a dataset, bandwidth,
+### and kernel combination
+f_hat <- function(x, X_i, h, K) {
+  n <- length(X_i)
+  (1 / h) * mean(K((x - X_i) / h))
+}
+
+f_hat_vec <- Vectorize(f_hat, vectorize.args = 'x') # Vectorize f_hat
+
+par(mfrow = c(1,2)) # Compare kernels and bandwidths
+# left-column: uniform, epanechnikov, triweight (m=40)
+# right-column: normal (m=20, 40, 60) Silverman, Terrell, SJ
+hist_est(var1 = f12, m = 40, # Plot a histogram (used twice)
+  hist_tile = 'Histogram of log F12', hist_x_lab = 'log F12', line_color = 'gray')
+
+# initialize variables for plotting
+D <- range(f12); x_pts <- seq(D[1], D[2], length.out = 1e2)
+
+f_hat_pts_uniform <- f_hat_vec(x = x_pts, X_i = f12, h = sheather_jones_h, K = uniform)
+lines(x_pts, f_hat_pts_uniform, lty = 1, col = 'blue') # plot Uniform KDE
+
+f_hat_pts_epanechnikov <- f_hat_vec(x = x_pts, X_i = f12, h = sheather_jones_h, K = epanechnikov)
+lines(x_pts, f_hat_pts_epanechnikov, lty = 2, col = 'red') # plot Epanechnikov KDE
+
+f_hat_pts_triweight <- f_hat_vec(x = x_pts, X_i = f12, h = sheather_jones_h, K = triweight)
+lines(x_pts, f_hat_pts_triweight, lty = 3, col = 'black') # plot Triweight KDE
+
+legend("topleft", legend = c('Uniform', 'Epanechnikov', 'Triweight'),
+       lty = c(1,2,3), col = c('blue', 'red', 'black')) # add legend
+
+f_hat_pts_sj <- f_hat_vec(x = x_pts, X_i = f12, h = sheather_jones_h, K = normal)
+lines(x_pts, f_hat_pts_sj, lty = 1, col = 'blue') # add KDE
+f_hat_pts_1.5 <- f_hat_vec(x = x_pts, X_i = f12, h = 1.5, K = normal)
+lines(x_pts, f_hat_pts_1.5, lty = 2, col = 'red') # add KDE
+f_hat_pts_0.05 <- f_hat_vec(x = x_pts, X_i = f12, h = 0.05, K = normal)
+lines(x_pts, f_hat_pts_0.05, lty = 3, col = 'black') # add KDE
+legend("topleft", legend = c('Sheather-Jones', '1.5', '0.05'),
+       lty = c(1,2,3), col = c('blue', 'red', 'black'))
+dev.off()
+
+### Fig. 8
+triangle <- function(z) { # Triangle kernel
+  ifelse(abs(z) < 1, 1 - abs(z), 0)
+}
+
+biweight <- function(z) { # Biweight kernel
+  ifelse(abs(z) < 1, (15 / 16) * ((1 - z^2)^2), 0)
+}
+
+xs <- seq(-3, 3, length.out = 1e5) # Compare different kernel densities
+plot(xs, uniform(xs), type = 'l', ylim = c(0,1.1),
+     main = 'Kernel Functions', col = 'black',
+     xlab = latex2exp::TeX('z'), ylab = latex2exp::TeX('K(z)'))
+lines(xs, normal(xs), lty = 2, col = 'red')
+lines(xs, epanechnikov(xs), lty = 3, col = 'green')
+lines(xs, triangle(xs), lty = 4, col = 'blue')
+lines(xs, biweight(xs), lty = 5, col = 16)
+lines(xs, triweight(xs), lty = 6, col = 'purple')
+legend("topleft", legend = c('Uniform', 'Normal', 'Epanechnikov',
+                             'Triangle', 'Biweght', 'Triweight'),
+       lty = c(1:6), col = c('black', 'red', 'green', 'blue', 16, 'purple'))
+dev.off()
+
+### Fig. 9
+### The scale_bandwidth() function will scale the bandwidth
+### for one kernel and bandwidth combination (K) to another
+### kernel and bandwidth combination (L).
+scale_bandwidth <- function(h_K, delta_K, delta_L) {
+  h_L <- (h_K / delta_K) * delta_L
+  return(h_L)
+}
+
+# delta(K) values for bandwidth scaling
+delta_normal <- (1 / (2 * sqrt(pi)))^(1 / 5)
+delta_uniform <- (9 / 2)^(1 / 5)
+delta_epanechnikov <- 15^(1 / 5)
+delta_triangle <- 24^(1 / 5)
+delta_biweight <- 35^(1/ 5)
+delta_triweight <- (9450 / 143)^(1 / 5)
+
+delta_vec <- c(delta_uniform, delta_epanechnikov, # vector for delta(K)
+               delta_triangle, delta_biweight, delta_triweight)
+# scale according to Normal kernel and Sheather-Jones bandwidth
+scale_vec <- sapply(delta_vec, function(x)
+  scale_bandwidth(h_K = sheather_jones_h,
+                  delta_K = delta_normal, delta_L = x))
+
+par(mfrow = c(1,2)) # Show the fit for different kernels
+hist_est(var1 = f12, m = 40, # Plot a histogram (used twice)
+         hist_tile = 'Histogram of log F12', hist_x_lab = 'log F12', line_color = 'gray')
+# Left-hand side graph
+f_hat_pts_uniform <- f_hat_vec(x = x_pts, X_i = f12, h = sheather_jones_h, K = uniform)
+lines(x_pts, f_hat_pts_uniform, lty = 1, col = 'blue') # add KDE
+f_hat_pts_epanechnikov <- f_hat_vec(x = x_pts, X_i = f12, h = sheather_jones_h, K = epanechnikov)
+lines(x_pts, f_hat_pts_epanechnikov, lty = 2, col = 'red') # add KDE
+f_hat_pts_triweight <- f_hat_vec(x = x_pts, X_i = f12, h = sheather_jones_h, K = triweight)
+lines(x_pts, f_hat_pts_triweight, lty = 3, col = 'black') # add KDE
+legend("topleft", legend = c('Uniform', 'Epanechnikov', 'Triweight'),
+       lty = c(1,2,3), col = c('blue', 'red', 'black'))
+
+# Right-hand side graph
+f_hat_pts_normal <- f_hat_vec(x = x_pts, X_i = f12, h = sheather_jones_h, K = normal)
+lines(x_pts, f_hat_pts_normal, lty = 1, col = 'black', lwd = 2) # add KDE
+f_hat_pts_uniform <- f_hat_vec(x = x_pts, X_i = f12, h = scale_vec[1], K = uniform)
+lines(x_pts, f_hat_pts_uniform, lty = 1, col = 'blue') # add KDE
+f_hat_pts_epanechnikov <- f_hat_vec(x = x_pts, X_i = f12, h = scale_vec[2], K = epanechnikov)
+lines(x_pts, f_hat_pts_epanechnikov, lty = 2, col = 'red') # add KDE
+f_hat_pts_triweight <- f_hat_vec(x = x_pts, X_i = f12, h = scale_vec[5], K = triweight)
+lines(x_pts, f_hat_pts_triweight, lty = 3, col = 'purple') # add KDE
+legend("topleft", legend = c('Normal','Uniform', 'Epanechnikov', 'Triweight'),
+       lty = c(1,1,2,3), lwd = c(2,1,1,1), col = c('black', 'blue', 'red', 'purple'))
+dev.off()
+
+### Computational Piece
+### Dataset 1: Diabetes
+diabetes <- read.csv('diabetes.csv') # Load data
+
+### Fig. 13
+par(mfrow = c(3,3)) # Plot all the variables find ones that maybe worth investigating
+var_description <- c( # Variable descriptions
+  'Number of times pregnant',
+  'Plasma glucose concentration a 2 hours in an oral glucose tolerance test',
+  'Diastolic blood pressure (mm Hg)',
+  'Triceps skin fold thickness (mm)',
+  '2-Hour serum insulin (mu U/ml)',
+  'Body mass index (weight in kg/(height in m)^2)',
+  'Diabetes pedigree function',
+  'Age (years)',
+  'Class variable (0 or 1)'
+)
+for (i in 1:ncol(diabetes)) { # Plot grid of 9 variables
+  hist(diabetes[,i], freq = FALSE,
+       main = paste0('Histogram of ', colnames(diabetes)[i]),
+       xlab = var_description[i])
+  lines(density(diabetes[,i]))
+}
+dev.off()
+
+### Age variable
+par(mfrow = c(3,3)) # Try different 'm' bins
+m_vec <- round(seq(25, 40, length.out = 9))
+sapply(m_vec, function(x) { # Test different ranges for 'm'
+  hist_est(var1 = diabetes$Age, m = x,
+           hist_tile = 'Histogram of Age', hist_x_lab = 'Age (years)')
+  lines(density(diabetes$Age))
+})
+dev.off()
+
+### Fig. 14
+par(mfrow = c(1,2)) # Compare chosen bins with default
+hist(diabetes$Age, main = 'Default Histogram for Age',
+     xlab = 'Age (years)', freq = FALSE)
+lines(density(diabetes$Age))
+hist_est(var1 = diabetes$Age, m = 32,
+         hist_tile = 'Histogram of Age', hist_x_lab = 'Age (years)')
+lines(density(diabetes$Age))
+dev.off()
+
+### Cross-Validation
+### Fig. 15
+# Calculate the Silverman and Sheather-Jones bandwidths for test
+# bandwidths in cross-validation.
+silverman_age <- silverman(x = diabetes$Age)
+sheather_jones_age <- locfit::sjpi(x = diabetes$Age, a = silverman_age)[1]
+
+### The cross_validation function calculates the cross-validation values
+### for each of the observations in a variable. It returns a matrix
+### of each of the cross-validation values.
+cross_validation <- function(var1 = diabetes$Age, h = 0.3, K = normal) {
+  n <- length(var1)
+  i_not_j_vec <- 1:n
+  cv_matrix <- matrix(NA, nrow = length(var1))
+  K_i_not_j <- matrix(NA, nrow = length(var1))
+  
+  for (i in 1:n) {
+    for (j in i_not_j_vec[-i]) {
+      K_i_not_j[j] <- K((var1[i] - var1[j]) / h)
+    }
+    cv_matrix[i] <- (1 / (h * (n - 1))) * sum(K_i_not_j[,1], na.rm = TRUE)
+    K_i_not_j <- matrix(NA, nrow = length(var1)) # reset to NA's
+  }
+  return(cv_matrix)
+}
+
+h_seq_age <- seq(sheather_jones_age - 2, # Test bandwidths for pseudo-likelihood
+                 sheather_jones_age + 2, length.out = 1e2)
+
+# Calculate and plot pseudo-likelihood values
+pseudo_likelihood_age <- sapply(h_seq_age, function(x) {
+  cv_output <- cross_validation(var1 = diabetes$Age,
+                                h = sheather_jones_age, K = normal)
+  prod(cv_output) # take the product of all the C-V values
+})
+
+plot(h_seq_age, pseudo_likelihood_age, type = 'l', # Plot the pseudo-likelihood
+     main = 'Pseudo-likelihood vs Bandwidth',
+     xlab = 'Bandwidth h', ylab = 'pseudo-likelihood')
+dev.off()
+
+### Fig. 16
+### The UCV function calculates the unbiased cross-validation
+### value for a variable given a bandwidth. It calculates the
+### roughness of f-hat using a closed-form solution along with
+### the expectation of f-hat using cross-validation to derive
+### the final result.
+UCV <- function(x, h = sheather_jones_age) {
+  # First calculate R(f-hat)
+  n <- length(x)
+
+  upper_lower_triangle <- outer(X = x, Y = x, FUN = function(u, v) {
+    exp((-1 / (4 * (h^2))) * ((u - v)^2))
+  }) # apply f(u,v) to all elements of n*n matrix
+
+  R_f <- (1 / ((n^2) * (h^2))) * # R(f-hat)
+    ((h * sqrt(pi)) / (2 * pi)) * sum(upper_lower_triangle)
+  
+  # Calculate the 2*E[f-hat] term using cross-validation and combine with R_f
+  ucv <- R_f - 2 * mean(cross_validation(var1 = x, h = h, K = normal))
+
+  return(ucv)
+}
+
+# test values about S-J
+ucv_seq_age <- seq(sheather_jones_age - 2, sheather_jones_age + 3, length.out = 20)
+ucv_values_age <- sapply(ucv_seq_age, function(x) {
+  UCV(x = diabetes$Age, h = x)
+})
+
+# optimal UCV bandwidth
+ucv_h_age <- ucv_seq_age[which.min(ucv_values_age)] # 0.1990868
+ucv_values_age[which.min(ucv_values_age)] # -0.1012167
+
+par(mfrow = c(1,2)) # Plot UCV error and UCV histogram
+plot(ucv_seq_age, ucv_values_age, type = 'l', # plot UCV results
+     main = 'UCV vs. Bandwidth', xlab = 'Bandwidth h', ylab = 'UCV')
+hist_est(var1 = diabetes$Age, m = 32,
+         hist_tile = 'Histogram of Age', hist_x_lab = 'Age (years)')
+D <- range(diabetes$Age); x_pts <- seq(D[1], D[2], length.out = 1e2)
+f_hat_pts_normal <- f_hat_vec(x = x_pts, X_i = diabetes$Age, h = ucv_h_age, K = normal)
+lines(x_pts, f_hat_pts_normal, lty = 1, col = 'red', lwd = 1) # add KDE
+legend("topright", legend = c('UCV'), col = 'red', lty = 1)
+dev.off()
+
+### Fig. 17
+# Sheather-Jones / Silverman
+silverman_age <- silverman(x = diabetes$Age) # 3.298613
+locfit::sjpi(x = diabetes$Age, a = silverman_age)[1] # 1.672771
+bw.SJ(x = diabetes$Age) # 1.007274
+MASS::width.SJ(x = diabetes$Age) # 4.029095
+
+### The sheather_jones_closed_form function calculates the roughness
+### of the second derivative of the K.D.E. estimate using the Normal kernel.
+### It then calculates the h-hat estimate for Sheather-Jones.
+sheather_jones_closed_form <- function(X = f12, h_0 = silverman_h) {
+  n <- length(X); R_K <- 1 / (2 * sqrt(pi)) # Initialize variables
+  
+  # Apply the closed form solution to all i,j elements
+  A_B <- outer(X = X, Y = X, FUN = function(u, v) {
+    D <- 1 / sqrt(2 * pi * ((h_0^2) / 2))
+    H <- exp((-1 / (h_0^2)) * (((u^2 + v^2) / 2) - ((u + v) / 2)^2))
+    mean_mu <- (u + v) / 2 # The mean and sd of the Normal g(x)
+    sd_sigma <- sqrt((h_0^2) / 2)
+    # The first 4 moments of the Normal distributions
+    moment_4 <- mean_mu^4 + 3 * sd_sigma^4 + 6 * mean_mu^2 * sd_sigma^2
+    moment_3 <- mean_mu^3 + 3 * mean_mu * sd_sigma^2
+    moment_2 <- mean_mu^2 + sd_sigma^2
+    moment_1 <- mean_mu
+    B_prime <- -(2 * moment_3 * v)/h_0^4 + # 4th degree polynomial
+      (moment_2 * v^2)/h_0^4 +
+      (4 * u * moment_2 * v)/h_0^4 -
+      (2 * u * moment_1 * v^2)/h_0^4 -
+      (2 * u^2 * moment_1 * v)/h_0^4 +
+      (u^2 * v^2)/h_0^4 +
+      moment_4/h_0^4 -
+      (2 * u * moment_3)/h_0^4 +
+      (u^2 * moment_2)/h_0^4 +
+      (2 * moment_1 * v)/h_0^2 -
+      v^2/h_0^2 -
+      (2 * moment_2)/h_0^2 +
+      (2 * u * moment_1)/h_0^2 -
+      u^2/h_0^2 + 1
+    B <- (B_prime / D) * (H / (2 * pi))
+    B
+  })
+  
+  # Calculate h-hat
+  roughness <- (1 / ((n^2) * (h_0^6))) * sum(A_B)
+  h_hat <- (R_K / (n * roughness))^(1 / 5)
+  return(h_hat)
+}
+
+s_j_closed_form_age <- sheather_jones_closed_form(X = diabetes$Age, h_0 = silverman_age)
+
+# Monte Carlo Integration
+### The MC_SJ function uses Monte Carlo Integration to estimate
+### the roughness of the second derivative of the K.D.E. f-hat.
+### The function assumes that the kernel function is the Normal
+### kernel. It also uses the Silverman bandwidth for a pilot
+### bandwidth. There are parameters to determine the approximation
+### for the infinite bounds (A=1e4) and the number of MC iterations
+### to try (n_MC). The function will output the S-J estimate.
+MC_SJ <- function(x = diabetes$Age, h_0 = silverman_age, A = 1e4, n_MC = 1e3) {
+  n <- length(x); R_K <- 1 / (2 * sqrt(pi)) # Initialize variables
+  set.seed(0); u_sample <- runif(n = n_MC, min = -A, max = A)
+  
+  # Calculate g(x), where X~Unif[-A,A]
+  MC_est <- sapply(u_sample, function(y) {
+    squared_sum <- outer(X = x, Y = x, FUN = function(u, v) {
+      (1 / (2 * pi)) *
+        exp(-0.5 * ((y - u) / h_0)^2) * (1 - ((y - u) / h_0)^2) *
+        exp(-0.5 * ((y - v) / h_0)^2) * (1 - ((y - v) / h_0)^2)
+    })
+    squared_sum <- sum(squared_sum)
+    (2 * A) * squared_sum
+  }
+  )
+  
+  MC_avg <- mean(MC_est) # Take avg of MC results
+  
+  # Calculate S-J estimate with MC
+  roughness_estimate <- (1 / ((n^2) * (h_0^6))) * MC_avg
+  sheather_jones_MC <- (R_K / (n * roughness_estimate))^(1 / 5)
+  
+  return(sheather_jones_MC)
+}
+
+# Calculate the Sheather-Jones bandwidth using Monte Carlo Integration
+sheather_jones_MC_age <- MC_SJ(x = diabetes$Age, # 1.515068
+  h_0 = silverman_age, A = 1e4, n_MC = 1e3)
+
+# Maximal smoothing principle
+terrell_age <- maximal_smoothing_principle(x = diabetes$Age) # 3.562298
+
+# Bandwidth scaling
+# Uniform, Epanechnikov, Triangle, Biweight, Triweight
+scale_vec_age <- sapply(delta_vec, function(x)
+  scale_bandwidth(h_K = s_j_closed_form_age,
+                  delta_K = delta_normal, delta_L = x))
+scale_vec_age # 2.911476 3.704153 4.069236 4.388178 4.982988
+
+par(mfrow = c(1,2)) # Compare results of different kernels
+hist_est(var1 = diabetes$Age, m = 32, line_color = 'gray',
+         hist_tile = 'Histogram of Age', hist_x_lab = 'Age (years)')
+D <- range(diabetes$Age)
+x_pts <- seq(D[1], D[2], length.out = 1e2) # sequence of x values for KDE
+# Normal
+f_hat_pts_normal <- f_hat_vec(x = x_pts, X_i = diabetes$Age,
+                              h = s_j_closed_form_age, K = normal)
+lines(x_pts, f_hat_pts_normal, lty = 1, col = 'black', lwd = 2) # add KDE
+# Uniform
+f_hat_pts_uniform <- f_hat_vec(x = x_pts, X_i = diabetes$Age,
+                               h = scale_vec_age[1], K = uniform)
+lines(x_pts, f_hat_pts_uniform, lty = 1, col = 'blue') # add KDE
+# Epanechnikov
+f_hat_pts_epanechnikov <- f_hat_vec(x = x_pts, X_i = diabetes$Age,
+                                    h = scale_vec_age[2], K = epanechnikov)
+lines(x_pts, f_hat_pts_epanechnikov, lty = 2, col = 'red') # add KDE
+legend("topright", legend = c('Normal', 'Uniform', 'Epanechnikov'),
+       col = c('black', 'blue', 'red'), lty = c(1,1,2), lwd = c(2,1,1))
+# Triangle
+f_hat_pts_triangle <- f_hat_vec(x = x_pts, X_i = diabetes$Age,
+                                h = scale_vec_age[3], K = triangle)
+lines(x_pts, f_hat_pts_triangle, lty = 1, col = 'red') # add KDE
+# Biweight
+f_hat_pts_biweight <- f_hat_vec(x = x_pts, X_i = diabetes$Age,
+                                h = scale_vec_age[4], K = biweight)
+lines(x_pts, f_hat_pts_biweight, lty = 2, col = 'blue') # add KDE
+# Triweight
+f_hat_pts_triweight <- f_hat_vec(x = x_pts, X_i = diabetes$Age,
+                                 h = scale_vec_age[5], K = triweight)
+lines(x_pts, f_hat_pts_triweight, lty = 3, col = 'purple') # add KDE
+legend("topright", legend = c('Normal', 'Triangle', 'Biweight', 'Triweight'),
+       col = c('black', 'red', 'blue', 'purple'), lty = c(1,1,2,3), lwd = c(2,1,1,1))
+dev.off()
+
+### Fig. 18
+# Plot Normal + different bandwidths
+hist_est(var1 = diabetes$Age, m = 32, line_color = 'gray',
+         hist_tile = 'Histogram of Age', hist_x_lab = 'Age (years)')
+# Normal
+f_hat_pts_normal <- f_hat_vec(x = x_pts, X_i = diabetes$Age,
+                              h = s_j_closed_form_age, K = normal)
+lines(x_pts, f_hat_pts_normal, lty = 1, col = 'black', lwd = 1) # add KDE
+f_hat_pts_normal <- f_hat_vec(x = x_pts, X_i = diabetes$Age,
+                              h = silverman_age, K = normal)
+lines(x_pts, f_hat_pts_normal, lty = 2, col = 'red', lwd = 1) # add KDE
+f_hat_pts_normal <- f_hat_vec(x = x_pts, X_i = diabetes$Age,
+                              h = terrell_age, K = normal)
+lines(x_pts, f_hat_pts_normal, lty = 3, col = 'blue', lwd = 1) # add KDE
+legend("topright", legend = c('Sheather-Jones', 'Silverman', 'Terrell'),
+       lty = c(1,2,3), col = c('black', 'red', 'blue'))
+dev.off()
+
+### Fig. 19
+# Explore difference
+# can try to overlap KDE for the two groups
+diab_pos <- diabetes[diabetes$Outcome == 1,]
+diab_neg <- diabetes[diabetes$Outcome == 0,]
+
+plot(density(diab_neg$Age), # Plot both groups' KDE
+     main = 'K.D.E. of Age (Positive and Negative for Diabetes)',
+     xlab = 'Age (years)')
+lines(density(diab_pos$Age), col = 'red')
+legend("topright", legend = c('Positive', 'Negative'),
+       col = c('red', 'black'), lty = c(1,1))
+dev.off()
+
+### Dataset 1: Diabetes
+wine <- read.csv('winequality-red.csv') # Load data
+
+### Fig. 20
+par(mfrow = c(4,3))
+# Reference: https://r.789695.n4.nabble.com/Replace-a-dot-in-a-string-quot-quot-with-a-space-quot-quot-td4726665.html
+var_names <- sub("[.]", " ", sub("[.]", " ", colnames(wine)))
+# Reference: https://stackoverflow.com/questions/6364783/capitalize-the-first-letter-of-both-words-in-a-two-word-string
+var_names <- tools::toTitleCase(var_names)
+var_description <- c(
+  'fixed acidity',
+  'amount of acetic acid',
+  'citric acid',
+  'amount of sugar after fermentation',
+  'amount of salt',
+  'free SO2',
+  'total SO2',
+  'density of wine',
+  'acidic level pH',
+  'sulphates',
+  'percent alcohol',
+  'quality score'
+)
+var_description <- tools::toTitleCase(var_description)
+
+for (i in 1:ncol(wine)) { # Plot grid of variables hist/KDE
+  hist(wine[,i], freq = FALSE,
+       main = paste0('Histogram of ', var_names[i]),
+       xlab = var_description[i])
+  lines(density(wine[,i]))
+}
+dev.off()
+
+### Fig. 21
+par(mfrow = c(3,3)) # Try different 'm' bins
+m_vec <- round(seq(10, 30, length.out = 9))
+sapply(m_vec, function(x) {
+  hist_est(var1 = wine$volatile.acidity, m = x,
+           hist_tile = 'Histogram of Volatile Acidity',
+           hist_x_lab = 'Amount of Acetic Acid')
+  lines(density(wine$volatile.acidity))
+})
+dev.off()
+
+par(mfrow = c(1,2)) # Compare chosen bins with default
+hist(wine$volatile.acidity, main = 'Default Histogram for Volatile Acidity',
+     xlab = 'Amount of Acetic Acid', freq = FALSE)
+lines(density(wine$volatile.acidity))
+hist_est(var1 = wine$volatile.acidity, m = 30,
+         hist_tile = 'Histogram of Volatile Acidity',
+         hist_x_lab = 'Amount of Acetic Acid')
+lines(density(wine$volatile.acidity))
+dev.off()
+
+### Fig. 22
+# Calculate Silverman/Sheather-Jones for cross-validation
+silverman_volatile_acid <- silverman(x = wine$volatile.acidity)
+sheather_jones_vol_acid <- locfit::sjpi(x = wine$volatile.acidity, a = silverman_volatile_acid)[1]
+h_seq_vol_a <- seq(sheather_jones_vol_acid - 0.5,
+                   sheather_jones_vol_acid + 2, length.out = 50)
+pseudo_likelihood_vol_a <- sapply(h_seq_vol_a, function(x) {
+  cv_output <- cross_validation(var1 = wine$volatile.acidity,
+                                h = x, K = normal)
+  prod(cv_output) # take the product of all the C-V values
+})
+
+plot(h_seq_vol_a, pseudo_likelihood_vol_a, # Plot pseudo-likelihood
+     type = 'l', main = 'Pseudo-likelihood vs. Bandwidth',
+     xlab = 'Bandwidth h', ylab = 'pseudo-likelihood')
+h_seq_vol_a[which.min(pseudo_likelihood_vol_a)] # -0.007168466
+dev.off()
+
+### Fig. 23
+# UCV
+ucv_seq_vol_a <- seq(sheather_jones_vol_acid - 0.5,
+                   sheather_jones_vol_acid + 2, length.out = 50)
+ucv_values_vol_a <- sapply(ucv_seq_vol_a, function(x) {
+  UCV(x = wine$volatile.acidity, h = x)
+})
+
+par(mfrow = c(1,2)) # Plot UCV optimum and KDE fit
+plot(ucv_seq_vol_a, ucv_values_vol_a, type = 'l', main = 'UCV vs. Bandwidth',
+     xlab = 'Bandwidth h', ylab = 'UCV')
+ucv_h_vol_a <- ucv_seq_vol_a[which.min(ucv_values_vol_a)] # 0.04303562
+ucv_values_vol_a[which.min(ucv_values_vol_a)] # -1.642159
+
+hist_est(var1 = wine$volatile.acidity, m = 30,
+         hist_tile = 'Histogram of Volatile Acidity',
+         hist_x_lab = 'Amount of Acetic Acid')
+D <- range(wine$volatile.acidity)
+x_pts <- seq(D[1], D[2], length.out = 1e2) # sequence of x values for KDE
+# Normal
+f_hat_pts_normal <- f_hat_vec(x = x_pts, X_i = wine$volatile.acidity,
+                              h = ucv_h_vol_a, K = normal)
+lines(x_pts, f_hat_pts_normal, lty = 1, col = 'red', lwd = 1) # add KDE
+legend("topright", legend = c('UCV'), col = 'red', lty = 1)
+dev.off()
+
+### Fig. 24
+# Calculate Sheather-Jones used Monte Carlo Integration
+silverman_volatile_acid <- silverman(x = wine$volatile.acidity) # 0.04337265
+sheather_jones_vol_acid <- locfit::sjpi(x = wine$volatile.acidity, # 0.03283153
+                                        a = silverman_volatile_acid)[1]
+# sheather_jones_MC_vol_acid <- MC_SJ(x = wine$volatile.acidity,
+  # h_0 = silverman_volatile_acid, A = 1e4, n_MC = 1e3)
+# Result is Inf, so use ad-hoc trick for MC
+h_0 = silverman_volatile_acid; A = 1e4; n_MC = 1e3 # code taken from MC_SJ() function
+x <- wine$volatile.acidity; R_K <- 1 / (2 * sqrt(pi))
+n <- length(x) # Initialize variables
+set.seed(0)
+u_sample <- runif(n = n_MC, min = -A, max = A)
+u_sample[(u_sample <= 4) & (u_sample >= -4)] # None between -4 and 4
+u_sample[1] <- 1 # Force a value to 1
+
+# Calculate g(x), where X~Unif[-A,A]
+### The g function is the squared sum calculation inside MC_est.
+### By vectorizing this portion it's possible to check which values
+### for u_sample will produce a non-zero value.
+g <- function(y) {
+  squared_sum <- outer(X = x, Y = x, FUN = function(u, v) {
+    (1 / (2 * pi)) *
+      exp(-0.5 * ((y - u) / h_0)^2) * (1 - ((y - u) / h_0)^2) *
+      exp(-0.5 * ((y - v) / h_0)^2) * (1 - ((y - v) / h_0)^2)
+  })
+  squared_sum <- sum(squared_sum)
+  (2 * A) * squared_sum
+}
+
+g_vec <- Vectorize(g, vectorize.args = c('y'))
+test_values <- -10:10
+non_zero_values <- which(g_vec(y = test_values) > 0)
+test_values[non_zero_values] # Only -1, 0, 1, and 2 are non zero
+
+MC_est <- sapply(u_sample[1], function(y) {
+  squared_sum <- outer(X = x, Y = x, FUN = function(u, v) {
+    (1 / (2 * pi)) *
+      exp(-0.5 * ((y - u) / h_0)^2) * (1 - ((y - u) / h_0)^2) *
+      exp(-0.5 * ((y - v) / h_0)^2) * (1 - ((y - v) / h_0)^2)
+    })
+    squared_sum <- sum(squared_sum)
+    (2 * A) * squared_sum
+  }
+)
+MC_avg <- mean(c(MC_est, rep(0, (n_MC - 1)))) # Same result after ad-hoc trick
+# MC_avg <- mean(MC_est) # Take avg of MC results
+
+# Calculate S-J estimate with MC
+roughness_estimate <- (1 / ((n^2) * (h_0^6))) * MC_avg
+sheather_jones_MC <- (R_K / (n * roughness_estimate))^(1 / 5)
+# forced result using ad-hoc trick; 0.02150129 old value
+sheather_jones_MC_vol_acid <- sheather_jones_MC # 0.03995043
+bw.SJ(x = wine$volatile.acidity) # 0.03162348
+MASS::width.SJ(x = wine$volatile.acidity) # 0.1264939
+s_j_closed_form_vol_a <- sheather_jones_closed_form(X = wine$volatile.acidity,
+  h_0 = silverman_volatile_acid) # 0.03283564, closed-form solution
+
+# Calculate Terrell's bandwidth
+terrell_volatile_acid <- maximal_smoothing_principle(x = wine$volatile.acidity) # 0.04683978
+
+# Scale the bandwidths
+scale_vec <- sapply(delta_vec, function(x)
+  scale_bandwidth(h_K = s_j_closed_form_vol_a,
+                  delta_K = delta_normal, delta_L = x))
+scale_vec # 0.05713589 0.07269169 0.07985622 0.08611526 0.09778802
+
+par(mfrow = c(1,2)) # Compare results
+hist_est(var1 = wine$volatile.acidity, m = 30, line_color = 'gray',
+         hist_tile = 'Histogram of Volatile Acidity',
+         hist_x_lab = 'Amount of Acetic Acid')
+D <- range(wine$volatile.acidity)
+x_pts <- seq(D[1], D[2], length.out = 1e2) # sequence of x values for KDE
+# Normal
+f_hat_pts_normal <- f_hat_vec(x = x_pts, X_i = wine$volatile.acidity,
+                              h = sheather_jones_MC_vol_acid, K = normal)
+lines(x_pts, f_hat_pts_normal, lty = 1, col = 'black', lwd = 2) # add KDE
+# Uniform
+f_hat_pts_uniform <- f_hat_vec(x = x_pts, X_i = wine$volatile.acidity,
+                               h = scale_vec[1], K = uniform)
+lines(x_pts, f_hat_pts_uniform, lty = 1, col = 'blue') # add KDE
+# Epanechnikov
+f_hat_pts_epanechnikov <- f_hat_vec(x = x_pts, X_i = wine$volatile.acidity,
+                                    h = scale_vec[2], K = epanechnikov)
+lines(x_pts, f_hat_pts_epanechnikov, lty = 2, col = 'red') # add KDE
+legend("topright", legend = c('Normal', 'Uniform', 'Epanechnikov'),
+       col = c('black', 'blue', 'red'), lty = c(1,1,2), lwd = c(2,1,1))
+# Triangle
+f_hat_pts_triangle <- f_hat_vec(x = x_pts, X_i = wine$volatile.acidity,
+                                h = scale_vec[3], K = triangle)
+lines(x_pts, f_hat_pts_triangle, lty = 1, col = 'red') # add KDE
+# Biweight
+f_hat_pts_biweight <- f_hat_vec(x = x_pts, X_i = wine$volatile.acidity,
+                                h = scale_vec[4], K = biweight)
+lines(x_pts, f_hat_pts_biweight, lty = 2, col = 'blue') # add KDE
+# Triweight
+f_hat_pts_triweight <- f_hat_vec(x = x_pts, X_i = wine$volatile.acidity,
+                                 h = scale_vec[5], K = triweight)
+lines(x_pts, f_hat_pts_triweight, lty = 3, col = 'purple') # add KDE
+legend("topright", legend = c('Normal', 'Triangle', 'Biweight', 'Triweight'),
+       col = c('black', 'red', 'blue', 'purple'), lty = c(1,1,2,3), lwd = c(2,1,1,1))
+dev.off()
+
+### Fig. 25
+# Plot final choice of kernel/bandwidth with Silverman and Terrell
+hist_est(var1 = wine$volatile.acidity, m = 30, line_color = 'gray',
+         hist_tile = 'Histogram of Volatile Acidity',
+         hist_x_lab = 'Amount of Acetic Acid')
+D <- range(wine$volatile.acidity)
+x_pts <- seq(D[1], D[2], length.out = 1e2) # sequence of x values for KDE
+# Normal
+f_hat_pts_normal <- f_hat_vec(x = x_pts, X_i = wine$volatile.acidity,
+                              h = s_j_closed_form_vol_a, K = normal)
+lines(x_pts, f_hat_pts_normal, lty = 1, col = 'black', lwd = 1) # add KDE
+f_hat_pts_normal <- f_hat_vec(x = x_pts, X_i = wine$volatile.acidity,
+                              h = silverman_volatile_acid, K = normal)
+lines(x_pts, f_hat_pts_normal, lty = 2, col = 'red', lwd = 1) # add KDE
+f_hat_pts_normal <- f_hat_vec(x = x_pts, X_i = wine$volatile.acidity,
+                              h = terrell_volatile_acid, K = normal)
+lines(x_pts, f_hat_pts_normal, lty = 3, col = 'blue', lwd = 1) # add KDE
+legend("topright", legend = c('Sheather-Jones', 'Silverman', 'Terrell'),
+       lty = c(1,2,3), col = c('black', 'red', 'blue'))
+dev.off()
+
+### Fig. 26
+# Explore difference
+# can try to overlap KDE for the two groups
+good_wine <- wine[wine$quality >= 7,]
+bad_wine <- wine[wine$quality <= 6,]
+plot(density(good_wine$volatile.acidity), # Plot both groups' KDE
+     main = 'K.D.E. of Volatile Acidity', col = 'red',
+     xlab = 'Amount of Acetic Acid')
+lines(density(bad_wine$volatile.acidity), col = 'black')
+legend("topright", legend = c('Good Wine (7+)', 'Bad Wine (<7)'),
+       col = c('red', 'black'), lty = c(1,1))
+dev.off()
+
+

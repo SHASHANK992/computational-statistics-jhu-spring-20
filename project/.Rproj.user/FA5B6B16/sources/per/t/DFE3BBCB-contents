@@ -1,0 +1,66 @@
+# simulate data for a mixture of normal densities
+delta <- 0.75
+### The mixture_dist_sim function generates simulated samples
+### from a mixture of normal densities, similar to Fig. 7.1
+### in the Givens textbook.
+mixture_dist_sim <- function(mixture = 0.75, n = 1e2) {
+  delta <- mixture
+  sim_matrix <- matrix(NA, nrow = n)
+  for (i in 1:n) {
+    u <- runif(1)
+    if (u <= delta) {
+      sim_matrix[i] <- rnorm(n = 1, mean = 7, sd = 0.5)
+    } else {
+      sim_matrix[i] <- rnorm(n = 1, mean = 10, sd = 0.5)
+    }
+  }
+  return(sim_matrix)
+}
+set.seed(1)
+samples1  <- mixture_dist_sim(mixture = 0.75, n = 1e4)
+samples2  <- mixture_dist_sim(mixture = 0.75, n = 1e2)
+samples3  <- mixture_dist_sim(mixture = 0.75, n = 1e3)
+# Reference: https://stackoverflow.com/questions/20952730/how-to-draw-kde-over-histogram-plot
+hist(samples1, freq = FALSE, ylim = c(0,0.6))
+lines(density(samples1))
+
+normal <- function(z) { dnorm(z) }
+f_hat <- function(x, X_i, h, K) {
+  n <- length(X_i)
+  (1 / h) * mean(K((x - X_i) / h))
+}
+f_hat_vec <- Vectorize(f_hat, vectorize.args = 'x')
+# f_hat_vec(x = x_pts, X_i = var1, h = h, K = K)
+kde <- function(var1 = samples1, h = 0.3, K = normal) {
+  n <- length(var1)
+  range_delta <- sd(var1)
+  x_limits <- c(range(var1)[1] - range_delta, range(var1)[2] + range_delta)
+  x_pts <- seq(x_limits[1], x_limits[2], length.out = 100)
+  f_hat_pts <- f_hat_vec(x = x_pts, X_i = var1, h = h, K = K)
+  y_limits <- c(-0.05, max(f_hat_pts) + 0.5 * sd(f_hat_pts))
+  # Reference: https://stackoverflow.com/questions/4785657/how-to-draw-an-empty-plot
+  # plot(1, type="n", xlab="", ylab="", xlim=x_limits, ylim=y_limits)
+  # abline(h = 0)
+  # points(var1, rep(0, length(var1)), pch = 3)
+  # lines(x_pts, f_hat_vec(x = x_pts, X_i = var1, h = h, K = K))
+  hist(var1, breaks=30, freq=FALSE, xlim=c(min(x_limits), max(x_limits)))
+
+  lines(x_pts, f_hat_vec(x = x_pts, X_i = var1, h = 2 * h, K = K), lwd = 1, lty = 2)
+  lines(x_pts, f_hat_vec(x = x_pts, X_i = var1, h = h, K = K), lwd = 2)
+  lines(x_pts, f_hat_vec(x = x_pts, X_i = var1, h = 0.5 * h, K = K), lwd = 1)
+  # legend("topright", legend = c(paste('h=',h), paste('h=',2*h),
+  #   paste('h=',0.5*h)), lty = c(1,2,1), lwd = c(2, 1, 1))
+  legend("topright", legend = c(paste('h=',2*h), paste('h=',h),
+    paste('h=',0.5*h)), lty = c(2,1,1), lwd = c(1, 2, 1))
+}
+
+kde(var1 = samples1, h = 0.3, K = normal)
+abline(v = 7, col = 'red'); abline(v = 10, col = 'red')
+kde(var1 = samples2, h = 0.3, K = normal)
+abline(v = 7, col = 'red'); abline(v = 10, col = 'red')
+kde(var1 = samples3, h = 0.3, K = normal)
+abline(v = 7, col = 'red'); abline(v = 10, col = 'red')
+
+
+
+

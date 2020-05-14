@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1586540739749.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "5|55|17|0|\n33|55|54|0|\n",
+    "hash" : "1257924996",
+    "id" : "DFE3BBCB",
+    "lastKnownWriteTime" : 1586563354,
+    "last_content_update" : 1586563354714,
+    "path" : "C:/Users/qizhe/Desktop/JHU/comp_stats/project/simulation.R",
+    "project_path" : "simulation.R",
+    "properties" : {
+        "cursorPosition" : "63,0",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

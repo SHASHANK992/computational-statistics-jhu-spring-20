@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1587700403751.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "127|24|129|0|\n132|29|134|0|\n137|26|139|0|\n143|51|162|0|\n187|55|199|0|\n246|25|248|0|\n250|25|252|0|\n",
+    "hash" : "731678591",
+    "id" : "6A2D0FA7",
+    "lastKnownWriteTime" : 1587951826,
+    "last_content_update" : 1588197401103,
+    "path" : "C:/Users/qizhe/Desktop/JHU/comp_stats/module_11/problem_set_11/kde.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "50,28",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
