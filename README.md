@@ -7,4 +7,4 @@ This repo contains course work completed for the Computational Statistics course
   - Within each folder is another problem_set(#) folder that contains the assignments per module.
   - The final assignment can be seen as Yu-PS(#).pdf and the code is ps(#).R.
   
-- project: Contains the data, R code, and PowerPoint presentation of the final project.
+- project: Contains the data, R code of the final project (PowerPoint presentation too large for GitHub).
