@@ -1,0 +1,58 @@
+# Problem 1.  Find the mean of numbers divisible by 3 between 1 and 100,000.
+# Remember if someone else has already done this can you think of another way to do it?
+# How else might you generate the numbers?
+# How else might you find the mean?
+# Did you use a built in function?
+# Did you use a loop?
+# Are there other methods.
+# Get creative with this simple task.
+# The idea is to show of different coding methods and options.
+mean(seq(from = 3, to = 100000, by = 3))
+numbers_1_to_100000 <- 1:100000
+mean(numbers_1_to_100000[numbers_1_to_100000 %% 3 == 0])
+
+
+# Problem 2. Create a function in R that returns a vector of all the odd numbers
+# between 1 and an inputted value $x$ (inclusive, so if $x$ is odd it is included). Then do the following:
+odd_numbers <- function(x) {
+  numbers_1_to_x <- 1:x
+  numbers_1_to_x[numbers_1_to_x %% 2 != 0]
+}
+# (a) find the mean of the odd numbers between  1 and 5555..
+odd_1_to_5555 <- odd_numbers(5555)
+mean(odd_1_to_5555)
+# (b) find all of the odd between 1 and 5555 as a matrix with 4 columns.
+odd_matrix_by_row <- matrix(odd_1_to_5555, ncol = 4, byrow = FALSE)
+odd_matrix_by_col <- matrix(odd_1_to_5555, ncol = 4, byrow = TRUE)
+
+# note: the length of the array of odd numbers between 1-5555 isn't divisible by 4
+# so the matrix wraps around back to the beginning
+length(odd_1_to_5555) / 4
+head(odd_matrix)
+tail(odd_matrix)
+
+# What is the entry of the matrix that is in the 100th row and 2rd column
+odd_matrix_by_row[100, 2]  # 1589
+odd_matrix_by_col[100, 2]  # 795
+
+# (c) find sum of the squares of the odd numbers between 1 and 1000 
+odd_1_to_1000 <- odd_numbers(1000)
+sum(odd_1_to_1000^2)
+
+# Problem 3. Consider the function f(x) =3x^3 + 4x^2 +2x +1.
+problem_3 <- function(x) {
+  (3 * x^3) + (4 * x^2) + (2 * x) + 1
+}
+# Plot f(x) on (-10,10). Can you do it by making a function in R.
+plot(problem_3, -10, 10)
+# Can you do it without making a function in R?
+x <- -10:10
+y <- (3 * x^3) + (4 * x^2) + (2 * x) + 1
+plot(x, y)
+# Can you do it as a smooth line? Can you change the color?
+plot(x, y, type = 'l', col = 'red')
+# What else can you do to make the plot more interesting?
+plot(x, y, type = 'l', col = 'red',
+     main = 'Problem 3 Plot', ylab = 'y-axis', xlab = 'x-axis')
+# Again, you do not need to answer all of the questions,
+# just try something and post if for your classmates to discuss.

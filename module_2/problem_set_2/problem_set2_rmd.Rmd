@@ -1,0 +1,348 @@
+---
+title: "PS2 rmd"
+author: "Jared Yu"
+date: "February 5, 2020"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r, eval=FALSE}
+### Problem 1
+library(latex2exp)
+y_sample_data <- c(28, 33, 22, 35, 31)  # Sample data
+y_sample_mean <- mean(y_sample_data)  # Sample mean
+theta_hat <- y_sample_mean  # MLE of theta
+
+L2_norm_squared <- function(y, theta) {  # Objective function
+  return(sum((y - theta)^2))
+}
+
+theta_vector <- seq(theta_hat - 10, theta_hat + 10, length.out = 200)
+L2_values <- sapply(theta_vector, function(index)
+  L2_norm_squared(y = y_sample_data, theta = index))
+plot(theta_vector, L2_values, type = 'l', main = TeX('$s_p(\\theta)$'),
+     ylab = 'L2 norm squared', xlab = TeX('$\\theta$'))
+
+L2_norm_squared_derivative <- function(y, theta) {
+  n <- length(y)
+  return(-2 * sum(y) + 2 * n * theta)
+}
+
+initialize_variables <- function(a_0, b_0) {
+  x_0 <- (a_0 + b_0) / 2
+  return(c(x_0, a_0, b_0))
+}
+
+absolute_convergence_function <- function(x_t, x_update, epsilon) {
+  absolute_convergence_criterion <- abs(x_update - x_t)
+  bool_flag <- ifelse(absolute_convergence_criterion < epsilon, FALSE, TRUE)
+  return(c(absolute_convergence_criterion, bool_flag))
+}
+
+a_b_update <- function(a_t, b_t, x_t) {
+  if(L2_norm_squared_derivative(y = y, theta = a_t) *
+     L2_norm_squared_derivative(y = y, theta = x_t) <= 0) {
+    a_update = a_t; b_update = x_t
+  } else {
+    a_update = x_t; b_update = b_t
+  }
+  return(c(a_update, b_update))
+}
+
+x_update_function <- function(a_update, b_update) {
+  x_update <- (a_update + b_update) / 2
+  return(x_update)
+}
+
+bisection <- function(a, b) {
+  initial_vector <- initialize_variables(a_0 = a, b_0 = b)  # Initialize variables
+  x_t <- initial_vector[1]; a_t <- initial_vector[2]; b_t <- initial_vector[3]
+  absolute_convergence_criterion <- TRUE
+  epsilon <- 0.01
+  counter <- 0
+  
+  while (absolute_convergence_criterion) {  # Loop through algorithm
+    a_b_update_vector <- a_b_update(a_t = a_t, b_t = b_t, x_t = x_t)
+    a_update <- a_b_update_vector[1]; b_update <- a_b_update_vector[2]
+    
+    x_update <- x_update_function(a_update = a_update, b_update = b_update)
+    
+    convergence_vector <- absolute_convergence_function(x_t = x_t,
+                                    x_update = x_update, epsilon = epsilon)
+    absolute_convergence_value <- convergence_vector[1]
+    absolute_convergence_criterion <- convergence_vector[2]
+    
+    a_t <- a_update; b_t <- b_update; x_t <- x_update; counter <- counter + 1
+  }
+  
+  cat('iteration t =', counter, '\n')  # Print results
+  cat('absolute convergence criterion: ', absolute_convergence_value, '\n')
+  cat('x_update: ', x_update, '\n')
+  
+  theta <- seq(a, b, length.out = 200)  # Zoom in to check
+  w <- sapply(theta, function(z) L2_norm_squared(y = y, theta = z))
+  plot(theta, w, main = TeX('$s_p(\\theta)$'), type = 'l')
+  legend("topright", legend = c("theta = 30", "bisection update"),
+         col = c('blue', 'red'), lty = c(1,1))
+  abline(v = 30, col = 'blue')
+  abline(v = x_update, col = 'red')
+}
+
+bisection(a = 25, b = 35) # 29.79492 (t=9)
+bisection(a = 28, b = 32) # 29.80469 (t=8)
+bisection(a = 29, b = 30) # 29.80469 (t=6)
+bisection(a = 29.6, b = 30) # 29.79375 (t=5)
+bisection(a = 29.7, b = 29.9) # 29.79375 (t=4)
+bisection(a = 29.75, b = 29.85) # 29.79375 (t=3)
+bisection(a = 29.78, b = 29.82) # 29.795 (t=2)
+bisection(a = 29.79, b = 29.81)
+bisection(a = 29.795, b = 29.805)
+bisection(a = 29.798, b = 29.802)
+# bisection(a = 29.79999, b = 29.80002) # 29.8 (t=1)
+bisection(a = 29.799999, b = 29.800001)
+bisection(a = 29.799, b = 29.801)
+
+### Problem 2
+problem_2_first_derivative <- function(x) {
+  return(-x^3 + x - 1)
+}
+
+problem_2_second_derivative <- function(x) {
+  return(-3 * x^2 + 1)
+}
+
+h <- function(x) {
+  return(-problem_2_first_derivative(x) / problem_2_second_derivative(x))
+}
+
+nr <- function(x_init, epsilon = 0.01) {
+  x_new <- x_init  # Initialize variables
+  x_old <- x_init + 9999
+  counter <- 0
+  absolute_convergence_criterion <- TRUE
+  
+  while(absolute_convergence_criterion) {  # Loop through algorithm
+    x_old <- x_new
+    x_new <- x_old + h(x_old)
+    
+    convergence_vector <- absolute_convergence_function(x_t = x_old,
+                                            x_update = x_new, epsilon = epsilon)
+    absolute_convergence_value <- convergence_vector[1]
+    absolute_convergence_criterion <- convergence_vector[2]
+    
+    counter <- counter + 1
+  }
+  
+  cat('iteration t =', counter, '\n')  # Print results
+  cat('absolute convergence criterion: ', absolute_convergence_value, '\n')
+  cat('x_update: ', x_new, '\n')
+}
+
+nr(-1) # -1.324718 (t=4)
+nr(2) # -1.324732 (t=64)
+
+problem_2_function <- function(x) {
+  return(-(1/4) * x^4 + (1/2) * x^2 - x + 2)
+}
+
+xs <- seq(-1.35, -1.3, length.out = 200) # Plot problem 2 and check values
+plot(xs, problem_2_function(xs), type = 'l')
+abline(v = -1.324718)
+abline(v = -1.324732)
+
+### Problem 3
+### Newton-Raphson
+cauchy_sample_data <- c(1.77, -0.23, 2.76, 3.80, 3.47,
+       56.75, -1.34, 4.24, -2.44, 3.29,
+       3.71, -2.40, 4.53, -0.07, -1.05,
+       -13.87, -2.53, -1.75, 0.27, 43.21)
+
+log_likelihood_cauchy <- function(x, theta) {
+  n <- length(x)
+  return(-n * log(pi) - sum(log(1 + (x - theta)^2)))
+}
+
+theta_sequence <- seq(-50, 50, 0.01)
+log_likelihood_values_cauchy <- sapply(theta_sequence, function(index)
+  log_likelihood_cauchy(x = cauchy_sample_data, theta = index))
+plot(theta_sequence, log_likelihood_values_cauchy,
+     type = 'l', main = TeX('$Cauchy log likelihood$'),
+     ylab = 'log-likelihood theta', xlab = TeX('$\\theta$'))
+
+log_likelihood_cauchy2 <- function(x, theta) {  # First derivative of log-likelihood
+  return(2 * sum((x - theta) / (1 + (x - theta)^2)))
+}
+
+log_likelihood_cauchy3 <- function(x, theta) {  # Second derivative of log-likelihood
+  squared_difference <- (x - theta)^2
+  return(2 * sum(((2 * squared_difference) /
+                    (1 + squared_difference)^2) - (1 / (1 + squared_difference))))
+}
+
+h_cauchy <- function(x, theta) {  # h(t) function
+  return(-log_likelihood_cauchy2(x = x, theta = theta) /
+           log_likelihood_cauchy3(x = x, theta = theta))
+}
+
+nr <- function(x = cauchy_sample_data, theta_init, epsilon = 0.01) {
+  theta_new <- theta_init  # Initialize variables
+  theta_old <- theta_init + 9999
+  counter <- 0
+  absolute_convergence_criterion <- TRUE
+  
+  while(absolute_convergence_criterion) {  # Loop through algorithm
+    theta_old <- theta_new
+    theta_new <- theta_old + h_cauchy(x = x, theta = theta_old)
+    
+    convergence_vector <- absolute_convergence_function(x_t = theta_old,
+                                            x_update = theta_new, epsilon = epsilon)
+    absolute_convergence_value <- convergence_vector[1]
+    absolute_convergence_criterion <- convergence_vector[2]
+    
+    counter <- counter + 1
+  }
+
+  cat('theta_init =', theta_init, '\n')
+  cat('iteration t =', counter, '\n')  # Print results
+  cat('absolute convergence criterion: ', absolute_convergence_value, '\n')
+  cat('theta_update: ', theta_new, '\n')
+  return(theta_new)
+}
+starting_points <- c(-11, -1, 0, 1.5, 4,
+                     4.7, 7, 8, 38)
+theta_approximate <- sapply(starting_points, function(index) nr(theta_init = index))
+
+theta_sequence <- seq(-0.19231, -0.19226, length.out = 200)
+log_likelihood_values <- sapply(theta_sequence, function(index)
+  log_likelihood_cauchy(x = cauchy_sample_data, theta = index))
+plot(theta_sequence, log_likelihood_values,
+     type = 'l', main = 'Cauchy log likelihood',
+     ylab = 'log-likelihood theta', xlab = TeX('$\\theta$'))
+abline(v = theta_approximate[1]) # -0.1922825
+abline(v = theta_approximate[2]) # -0.1922865 (closer)
+abline(v = theta_approximate[3]) # -0.1922825
+abline(v = theta_approximate[6]) # -0.1922865 (closer)
+abline(v = theta_approximate[8]) # -0.1922825
+# -1, 4.7 closest
+
+### bisection method
+a_b_update_cauchy <- function(a_t, b_t, x_t) {
+  if(log_likelihood_cauchy2(x = cauchy_sample_data, theta = a_t) *
+     log_likelihood_cauchy2(x = cauchy_sample_data, theta = x_t) <= 0) {
+    a_update = a_t; b_update = x_t
+  } else {
+    a_update = x_t; b_update = b_t
+  }
+  return(c(a_update, b_update))
+}
+
+bisection_cauchy <- function(a, b) {
+  initial_vector <- initialize_variables(a_0 = a, b_0 = b)  # Initialize variables
+  x_t <- initial_vector[1]; a_t <- initial_vector[2]; b_t <- initial_vector[3]
+  absolute_convergence_criterion <- TRUE
+  epsilon <- 0.01
+  counter <- 0
+  
+  while (absolute_convergence_criterion) {  # Loop through algorithm
+    a_b_update_vector <- a_b_update_cauchy(a_t = a_t, b_t = b_t, x_t = x_t)
+    a_update <- a_b_update_vector[1]; b_update <- a_b_update_vector[2]
+    
+    x_update <- x_update_function(a_update = a_update, b_update = b_update)
+    
+    convergence_vector <- absolute_convergence_function(x_t = x_t,
+                                    x_update = x_update, epsilon = epsilon)
+    absolute_convergence_value <- convergence_vector[1]
+    absolute_convergence_criterion <- convergence_vector[2]
+    
+    a_t <- a_update; b_t <- b_update; x_t <- x_update; counter <- counter + 1
+  }
+  
+  cat('iteration t =', counter, '\n')  # Print results
+  cat('absolute convergence criterion: ', absolute_convergence_value, '\n')
+  cat('x_update: ', x_update, '\n')
+  
+  theta <- seq(a, b, length.out = 200)  # Zoom in to check
+  w <- sapply(theta, function(y)
+    log_likelihood_cauchy(x = cauchy_sample_data, theta = y))
+  plot(theta, w, main = "log likelihood function", type = 'l')
+  legend("bottomleft", legend = c("theta = 0", "bisection update"),
+         col = c('blue', 'red'), lty = c(1,1))
+  abline(v = 0, col = 'blue')
+  abline(v = x_update, col = 'red')
+}
+
+bisection_cauchy(a = -1, b = 1)  # -0.1953125 (t=7)
+bisection_cauchy(a = -5, b = 5)  # -0.1855469 (t=9)
+bisection_cauchy(a = -10, b = 10)  # -0.1855469 (t=10)
+bisection_cauchy(a = -20, b = 40)  # 2.814941 (t=12)
+
+### fixed-point iterations
+fixed_point <- function(theta_init, alpha) {
+  theta_current <- theta_init  # Initialize variables
+  absolute_convergence_criterion <- TRUE
+  epsilon <- 0.01
+  counter <- 0
+  
+  while (absolute_convergence_criterion) {  # Loop through algorithm
+    theta_update <- theta_current + alpha *
+      log_likelihood_cauchy2(x = cauchy_sample_data, theta = theta_current)
+
+    convergence_vector <- absolute_convergence_function(x_t = theta_current,
+                              x_update = theta_update, epsilon = epsilon)
+    absolute_convergence_value <- convergence_vector[1]
+    absolute_convergence_criterion <- convergence_vector[2]
+    
+    theta_current <- theta_update; counter <- counter + 1
+  }
+  
+  cat('iteration t =', counter, '\n')  # Print results
+  cat('absolute convergence criterion: ', absolute_convergence_value, '\n')
+  cat('theta_update: ', theta_update, '\n')
+  
+  return(theta_update)
+}
+alpha_vector <- c(1, 0.64, 0.25)
+sapply(alpha_vector, function(index) fixed_point(theta_init = -1, alpha = index))
+# -0.1977772 (t=2065, alpha=1)
+# -0.1971533 (t=114, alpha=0.64)
+# -0.1937823 (t=5, alpha=0.25)
+
+### secant method
+secant_update <- function(theta_current, theta_previous) {
+  theta_update <- theta_current -
+    log_likelihood_cauchy2(cauchy_sample_data, theta_current) *
+    ((theta_current - theta_previous) /
+       (log_likelihood_cauchy2(cauchy_sample_data, theta_current) -
+          log_likelihood_cauchy2(cauchy_sample_data, theta_previous)))
+  return(theta_update)
+}
+secant_method <- function(theta_init, theta_1) {
+  theta_previous <- theta_init  # Initialize variables
+  theta_current <- theta_1
+  absolute_convergence_criterion <- TRUE
+  epsilon <- 0.01
+  counter <- 0
+  
+  while (absolute_convergence_criterion) {  # Loop through algorithm
+    theta_update <- secant_update(theta_current, theta_previous)
+    
+    convergence_vector <- absolute_convergence_function(x_t = theta_current,
+                                              x_update = theta_update, epsilon = epsilon)
+    absolute_convergence_value <- convergence_vector[1]
+    absolute_convergence_criterion <- convergence_vector[2]
+    
+    theta_previous <- theta_current; theta_current <- theta_update; counter <- counter + 1
+  }
+  
+  cat('iteration t =', counter, '\n')  # Print results
+  cat('absolute convergence criterion: ', absolute_convergence_value, '\n')
+  cat('theta_update: ', theta_update, '\n')
+  
+  return(theta_update)
+}
+
+secant_method(theta_init = -2, theta_1 = -1) # -0.1923655 (t=4)
+secant_method(theta_init = -3, theta_1 = 3) # 2.817013 (t=4)
+
+```

@@ -1,0 +1,14 @@
+sigmoid_derivative <- function(x) {
+  exp(-x) / (1 + exp(-x))^2
+}
+
+sigmoid_derivative(4)
+
+sigmoid <- function(x) {
+  1 / (1 + exp(-x))
+}
+
+sigmoid(2) * (1 - sigmoid(2))
+
+a = sqrt(14)
+((-23 * 3) / a) + (4 / a) - (18/a)

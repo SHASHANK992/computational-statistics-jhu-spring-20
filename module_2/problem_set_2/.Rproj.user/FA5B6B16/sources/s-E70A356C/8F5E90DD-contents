@@ -1,0 +1,170 @@
+x <- c(3.91, 4.85, 2.28, 4.06, 3.70,
+       4.04, 5.46, 3.53, 2.28, 1.96,
+       2.53, 3.88, 2.22, 3.47, 4.82,
+       2.46, 2.99, 2.54, 0.52, 2.50)
+
+# Problem 1.  What is the log likelihood function for theta.
+# Graph it on -Pi to Pi. Looking this graph, approximate the optimal value for theta
+# (or a region in which you would expect to find it).
+log_likelihood <- function(x, theta) {
+  n <- length(x)
+  return(sum(log(1 - cos(x - theta))) - n * log(2 * pi))
+}
+
+theta <- seq(-pi, pi, length.out = 200)
+w <- sapply(theta, function(y) log_likelihood(x = x, theta = y))
+
+plot(theta, w, main = "log-likelihood function vs. theta",
+     ylab = 'log-likelihood',type = 'l')
+a_0 <- -0.3
+b_0 <- 0.2
+abline(v = a_0, col = 'red')
+abline(v = b_0, col = 'red')
+
+# Problem 2. Find the MLE for theta using the Bisection Method correct to two decimal places.
+# What was your initial interval? How many iterations did it take to converge?
+# Does the method always converge to the correct value? Why or why not?
+log_likelihood2 <- function(x, theta) {
+  return(-sum(sin(x - theta) / (1 - cos(x - theta))))
+}
+
+initialize_variables <- function(a_0, b_0) {
+  x_0 <- (a_0 + b_0) / 2
+  return(c(x_0, a_0, b_0))
+}
+
+a_b_update <- function(a_t, b_t, x_t) {
+  if(log_likelihood2(x = x, theta = a_t) * log_likelihood2(x = x, theta = x_t) <= 0) {
+    a_update = a_t; b_update = x_t
+  } else {
+    a_update = x_t; b_update = b_t
+  }
+  return(c(a_update, b_update))
+}
+
+x_update_function <- function(a_update, b_update) {
+  x_update <- (a_update + b_update) / 2
+  return(x_update)
+}
+
+absolute_convergence_function <- function(x_t, x_update, epsilon) {
+  absolute_convergence_criterion <- abs(x_update - x_t)
+  bool_flag <- ifelse(absolute_convergence_criterion < epsilon, FALSE, TRUE)
+  return(c(absolute_convergence_criterion, bool_flag))
+}
+
+bisection <- function(a, b) {
+  initial_vector <- initialize_variables(a_0 = a, b_0 = b)  # Initialize variables
+  x_t <- initial_vector[1]; a_t <- initial_vector[2]; b_t <- initial_vector[3]
+  absolute_convergence_criterion <- TRUE
+  epsilon <- 0.01
+  counter <- 0
+  
+  while (absolute_convergence_criterion) {  # Loop through algorithm
+    a_b_update_vector <- a_b_update(a_t = a_t, b_t = b_t, x_t = x_t)
+    a_update <- a_b_update_vector[1]; b_update <- a_b_update_vector[2]
+    
+    x_update <- x_update_function(a_update = a_update, b_update = b_update)
+    
+    convergence_vector <- absolute_convergence_function(x_t = x_t,
+                                              x_update = x_update, epsilon = epsilon)
+    absolute_convergence_value <- convergence_vector[1]
+    absolute_convergence_criterion <- convergence_vector[2]
+    
+    a_t <- a_update; b_t <- b_update; x_t <- x_update; counter <- counter + 1
+  }
+  
+  cat('iteration t =', counter, '\n')  # Print results
+  cat('absolute convergence criterion: ', absolute_convergence_value, '\n')
+  cat('x_update: ', x_update, '\n')
+  
+  theta <- seq(a, b, length.out = 200)  # Zoom in to check
+  w <- sapply(theta, function(y) log_likelihood(x = x, theta = y))
+  plot(theta, w, main = "log likelihood function", type = 'l')
+  legend("bottomleft", legend = c("theta = 0", "bisection update"),
+         col = c('blue', 'red'), lty = c(1,1))
+  abline(v = 0, col = 'blue')
+  abline(v = x_update, col = 'red')
+}
+
+bisection(a = -pi, b = pi)  # -1.662835 (t=9)
+bisection(a = -3, b = 3)  # 2.501953 (t=9)
+bisection(a = -2, b = 2)  # -0.0078125  (t=8)
+bisection(a = -0.5, b = 0.5)  # -0.0078125 (t=6)
+bisection(a = -0.2, b = 0.3)  # -0.0046875 (t=5)
+bisection(a = -0.1, b = 0.1)  # -0.00625 (t=4)
+bisection(a = -0.05, b = 0.05)  # -0.00625 (t=3)
+bisection(a = -0.02, b = 0)  # -0.015 (t=6)
+bisection(a = -0.02, b = -0.01)  # -0.0125 (t=1)
+bisection(a = -0.014, b = -0.01)  # -0.011 (t=1)
+bisection(a = -0.013, b = -0.009)  # -0.012 (t=1)
+
+# Problem 3. Find the MLE for theta using Newton's method correct to two decimal places.
+# What is the refinement increment h(t)?
+# What was your starting point? How many iterations did it take?
+# What if you changed starting points? Some suggestion are -2.7 and 2.7.
+# Does your method always converge to the correct value of theta? Why or Why not?
+log_likelihood3 <- function(x, theta) {
+  return(-sum(1 / (1 - cos(x - theta))))
+}
+
+h <- function(x, theta) {
+  return(-log_likelihood2(x, theta) / log_likelihood3(x, theta))
+}
+
+nr <- function(x, theta_init, epsilon) {
+  theta_new <- theta_init  # Initialize variables
+  theta_old <- theta_init + 9999
+  counter <- 0
+  absolute_convergence_criterion <- TRUE
+
+  while(absolute_convergence_criterion) {  # Loop through algorithm
+    theta_old <- theta_new
+    theta_new <- theta_old + h(x, theta_old)
+
+    convergence_vector <- absolute_convergence_function(x_t = theta_old,
+                                          x_update = theta_new, epsilon = epsilon)
+    absolute_convergence_value <- convergence_vector[1]
+    absolute_convergence_criterion <- convergence_vector[2]
+    
+    counter <- counter + 1
+  }
+
+  cat('iteration t =', counter, '\n')  # Print results
+  cat('absolute convergence criterion: ', absolute_convergence_value, '\n')
+  cat('theta_update: ', theta_new, '\n')
+}
+
+nr(x, 0, 0.01)  # -0.011972 (t=2)
+nr(x, -0.2, 0.01)  # -0.01197102 (t=2)
+nr(x, -0.1, 0.01)  # -0.01197129 (t=2)
+nr(x, -0.01, 0.01)  # -0.01197047 (t=1)
+nr(x, -0.011, 0.01)  # -0.01197163 (t=1)
+nr(x, -2.7, 0.01)  # -2.666794 (t=2)
+nr(x, 2.7, 0.01)  # 2.873184 (t=3)
+nr(x, pi, 0.01)  # 3.190075 (t=2)
+nr(x, -pi, 0.01)  # -3.09311 (t=2)
+
+plot(theta, w, main = "log-likelihood function vs. theta",
+     ylab = 'log-likelihood',type = 'l')
+abline(v = -2.674114, col = 'red')
+abline(v = 2.873184, col = 'red')
+abline(v = 3.190075, col = 'red')
+abline(v = -3.09311, col = 'red')
+abline(v = -0.01197163, col = 'blue')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

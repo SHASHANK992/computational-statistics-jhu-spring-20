@@ -1,0 +1,107 @@
+library(latex2exp)
+### Problem 1
+set.seed(664)
+x <- runif(1000000)
+mean(sin(x)) # 0.4554449
+
+### Problem 2
+mean(2*exp(x^2)) # 2.932493
+
+### Problem 3
+# part (a)
+z <- seq(-0.5, 1.5, length.out = 10000)
+plot(z, ifelse(test = (0 <= z) & (z <= 1),
+       yes = (3 * z^2 - 2 * z^3),
+       no = 0), type = 'l', main = 'Plot of CDF',
+     xlab = TeX('z'), ylab = TeX('$F(z)$'))
+
+# part (b)
+# Reference: https://math.vanderbilt.edu/schectex/courses/cubic/
+a = -2
+b = 3
+c = 0
+d = 0 - z
+part1 <- ((-b^3) / (27 * a^3)) + ((b * c) / (6 * a^2)) - (d / (2 * a))
+part2 <- ((c / (3 * a)) - ((b^2) / (9 * a^2)))^3
+inv_result <- (part1 + sqrt(part1^2 + part2))^(1/3) + (part1 - sqrt(part1^2 + part2))^(1/3) - (b / (3 * a))
+
+# Reference: https://stackoverflow.com/questions/18142117/how-to-replace-nan-value-with-zero-in-a-huge-data-frame/18143097
+inv_result[is.na(inv_result)] <- 0
+plot(z, inv_result, type = 'l', main = "Inverse CDF (NaN\'s converted to 0\'s)", ylab = TeX('F^{-1}(y)'))
+
+# part (c)
+fnc_z <- function(z) { # target distribution
+  6 * z * (1 - z)
+}
+
+fnc_z_vec <- Vectorize(fnc_z) # vectorize the function
+
+zs <- seq(0, 1, length.out = 1000) # graph the target and chosen instrumental functions
+plot(zs, fnc_z_vec(zs), main = 'Graph of Target and Instrumental Distributions',
+     xlab = TeX('z'), ylab = TeX('f(z)'),
+     type = 'l', ylim = c(0,2.5), xlim = c(0, 1.05))
+abline(v = 0) # draw axes
+abline(h = 0)
+# max(fnc_z(zs)) # peak around 1.5
+
+# instrumental distribution
+bounds <- seq(0, 1, length.out = 1000)
+gs <- dnorm(bounds, mean = 0.5, sd = 0.25)
+
+alpha <- 0.7
+es <- gs / alpha
+lines(bounds, es, col = 'red')
+abline(v = 1, col = 'red')
+
+g <- function(y, mu = 0.5, sigma = 0.25) {
+  (1 / (sqrt(2 * pi) * sigma)) * exp((-(y - mu)^2) / (2 * sigma^2))
+}
+g(y = 0, mu = 0, sigma = 1)
+
+pnorm(q = y, mean = 0.5, sd = 0.25)
+
+rejection_rule <- function(u, y, alpha = 0.7) { # Used in rejection_sampling()
+  f_y <- fnc_z(y)
+  # Reference: https://www.r-bloggers.com/normal-distribution-functions/
+  envelope <- (dnorm(y, mean = 0.5, sd = 0.25) / alpha)
+  if ((u > (f_y / envelope)) | (y < 0) | (y > 1)) {
+    return(FALSE)
+  } else {
+    return(TRUE)
+  }
+}
+
+rejection_sampling <- function(num_samples = 1000) {
+  sampling_matrix <- matrix(NA, nrow = num_samples)
+  count <- 0; rejects <- 0 # Initialize variables
+  
+  while (count != num_samples) { # Sample values
+    y <- rnorm(n = 1, mean = 0.5, sd = 0.25)
+    u <- runif(n = 1, min = 0, max = 1)
+
+    if (rejection_rule(u, y)) {
+      sampling_matrix[count + 1] <- y
+      count <- count + 1 # Accept values
+    } else {
+      rejects <- rejects + 1
+    }
+  }
+  cat('Rejects:', rejects)
+  return(sampling_matrix)
+}
+
+set.seed(664)
+rejection_samples <- rejection_sampling()
+1 - 405 / 1000 # acceptance rate = 0.595, somewhat far from alpha = 0.7
+
+rejection_samples <- rejection_sampling(num_samples = 1000000)
+1 - 428910 / 1e6 # 0.57109, further from 0.7
+hist(as.vector(rejection_samples), xlab = 'Sample Value', # histogram
+     main = 'Histogram of Samples Using Rejection Sampling')
+
+# part (d)
+mean(rejection_samples)
+
+
+
+

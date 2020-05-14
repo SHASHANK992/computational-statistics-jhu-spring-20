@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1588908898454.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "63|56|74|0|\n",
+    "hash" : "1866450293",
+    "id" : "6143A696",
+    "lastKnownWriteTime" : 1588980455,
+    "last_content_update" : 1588980455649,
+    "path" : "C:/Users/qizhe/Desktop/JHU/comp_stats/module_13/problem_set_13/ps13.R",
+    "project_path" : "ps13.R",
+    "properties" : {
+        "cursorPosition" : "2,0",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

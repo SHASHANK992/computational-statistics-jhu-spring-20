@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1589157551815.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "740085774",
+    "id" : "621534D7",
+    "lastKnownWriteTime" : 1589213699,
+    "last_content_update" : 1589213699150,
+    "path" : "C:/Users/qizhe/Desktop/JHU/comp_stats/final/final.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "66,0",
+        "scrollLine" : "40",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

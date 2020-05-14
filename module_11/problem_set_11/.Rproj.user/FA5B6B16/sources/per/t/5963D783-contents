@@ -1,0 +1,93 @@
+library(lattice); library(kdensity); library(EQL)
+head(iris)
+setosa <- iris[iris$Species == 'setosa',]
+# develop some kde algorithm
+# we have options of: data, bandwidth, kernel choice
+# for now, we can use just the Gaussian kernel
+# we can try to attempt bandwidth choice / cross-validation
+
+# step 1, apply KDE with arbitrary bandwidth and Gauss kernel
+# try to see if plot looks right
+
+hist(setosa$Sepal.Length)
+normal <- function(z) { dnorm(z) }
+uniform <- function(z) { 1 / 2 }
+epanechnikov <- function(z) { (3 / 4) * (1 - z^2) }
+triangle <- function(z) { 1 - abs(z) }
+biweight <- function(z) { (15 / 16) * (1 - z^2)^2 }
+triweight <- function(z) { (35 / 32) * (1 - z^2)^3 }
+
+f_hat <- function(x, X_i, h, K) {
+  n <- length(X_i)
+  (1 / h) * mean(K((x - X_i) / h))
+}
+
+f_hat_vec <- Vectorize(f_hat, vectorize.args = 'x')
+f_hat_vec(x = x_pts, X_i = var1, h = h, K = K)
+
+kde <- function(var1 = iris$Sepal.Length, h = 0.03, K = normal) {
+  n <- length(var1)
+
+  range_delta <- sd(var1)
+  x_limits <- c(range(var1)[1] - range_delta, range(var1)[2] + range_delta)
+  x_pts <- seq(x_limits[1], x_limits[2], length.out = 100)
+  f_hat_pts <- f_hat_vec(x = x_pts, X_i = var1, h = h, K = K)
+  y_limits <- c(-0.05, max(f_hat_pts) + 0.5 * sd(f_hat_pts))
+  # Reference: https://stackoverflow.com/questions/4785657/how-to-draw-an-empty-plot
+  plot(1, type="n", xlab="", ylab="", xlim=x_limits, ylim=y_limits)
+  abline(h = 0)
+  points(var1, rep(0, length(var1)), pch = 3)
+  
+  lines(x_pts, f_hat_vec(x = x_pts, X_i = var1, h = h, K = K))
+  # h1 = hist(var1)
+  # h1$density = h1$counts/sum(h1$counts)
+  # plot(h1,freq=FALSE, ylim = c(0,0.5))
+  hist(var1,breaks=20,freq=FALSE, xlim=c(min(x_limits),max(x_limits)))
+
+  # lines(x_pts, f_hat_vec(x = x_pts, X_i = var1, h = 2, K = K))
+  # lines(x_pts, f_hat_vec(x = x_pts, X_i = var1, h = 0.3, K = K))
+  # lines(x_pts, f_hat_vec(x = x_pts, X_i = var1, h = 0.5, K = K))
+  # lines(x_pts, f_hat_vec(x = x_pts, X_i = var1, h = 1e-1, K = K))
+}
+
+h_general <- 1.06 * sd(faithful$eruptions)*length(faithful$eruptions)^(-1/5)
+par(mfrow = c(3, 2))
+kde(var1 = faithful$eruptions, h = h_general, K = normal)
+kde(var1 = faithful$eruptions, h = h_general, K = uniform)
+# kde(var1 = faithful$eruptions, h = h_general, K = uniform)
+# kde(var1 = faithful$eruptions, h = h_general, K = epanechnikov)
+# kde(var1 = faithful$eruptions, h = h_general, K = triangle)
+# kde(var1 = faithful$eruptions, h = h_general, K = biweight)
+# kde(var1 = faithful$eruptions, h = h_general, K = triweight)
+
+kde1 = kdensity(var1, start = "gumbel", kernel = "gaussian")
+plot(kde1)
+lines(kde1, plot_start = TRUE, col = "red")
+rug(var1)
+
+cross_validation <- function(var1 = faithful$eruptions, h = 0.3, K = normal) {
+  n <- length(var1)
+  i_not_j_vec <- 1:n
+  cv_matrix <- matrix(NA, nrow = length(var1))
+  K_i_not_j <- matrix(NA, nrow = length(var1))
+
+  for (i in 1:n) {
+    for (j in i_not_j_vec[-i]) {
+      K_i_not_j[j] <- K((var1[i] - var1[j]) / h)
+    }
+    cv_matrix[i] <- (1 / (h * (n - 1))) * sum(K_i_not_j[,1], na.rm = TRUE)
+    K_i_not_j <- matrix(NA, nrow = length(var1)) # reset to NA's
+  }
+  return(cv_matrix)
+}
+
+cv <- cross_validation(var1 = faithful$eruptions, h = 0.3, K = normal)
+prod(cv)
+
+cv <- cross_validation(var1 = faithful$eruptions, h = 0.5, K = normal)
+prod(cv)
+
+a = c(1:50)
+a[-2]
+
+

@@ -1,0 +1,266 @@
+---
+title: "ps6_rmd"
+author: "Jared Yu"
+date: "March 6, 2020"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r, eval=FALSE}
+library(latex2exp)
+### Problem 2
+g1 <- function(x2, mu1, mu2, sigma1, sigma2, rho) {
+  rnorm(n = 1, mean = mu1 + rho * (sigma1 / sigma2) * (x2 - mu2),
+        sd = sqrt((sigma1^2) * (1 - rho^2)))
+}
+
+g2 <- function(x1, mu1, mu2, sigma1, sigma2, rho) {
+  rnorm(n = 1, mean = mu2 + rho * (sigma1 / sigma2) * (x1 - mu1),
+        sd = sqrt((sigma2^2) * (1 - rho^2)))
+}
+
+gibbs_sampling <- function(x1_init, x2_init, mu1_init = 0, mu2_init = 0,
+                           sigma1_init = 1, sigma2_init = 1, rho_init, iterations = 1e5) {
+  sampling_matrix <- matrix(NA, nrow = iterations, ncol = 2)
+  
+  x1_t <- x1_init; x2_t <- x2_init; mu1 <- mu1_init; mu2 <- mu2_init
+  sigma1 <- sigma1_init; sigma2 <- sigma2_init; rho <- rho_init
+  
+  for (i in 1:iterations) {
+    x1_star <- g1(x2 = x2_t, mu1 = mu1, mu2 = mu2,
+                  sigma1 = sigma1, sigma2 = sigma2, rho = rho)
+    x2_star <- g2(x1 = x1_star, mu1 = mu1, mu2 = mu2,
+                  sigma1 = sigma1, sigma2 = sigma2, rho = rho)
+    sampling_matrix[i,] <- c(x1_star, x2_star)
+  }
+ return(sampling_matrix) 
+}
+
+rho0_sample <- gibbs_sampling(x1_init = 0, x2_init = 0, rho_init = 0)
+rho1_sample <- gibbs_sampling(x1_init = 0, x2_init = 0, rho_init = 0.1)
+rho2_sample <- gibbs_sampling(x1_init = 0, x2_init = 0, rho_init = 0.2)
+rho3_sample <- gibbs_sampling(x1_init = 0, x2_init = 0, rho_init = 0.3)
+rho4_sample <- gibbs_sampling(x1_init = 0, x2_init = 0, rho_init = 0.4)
+rho5_sample <- gibbs_sampling(x1_init = 0, x2_init = 0, rho_init = 0.5)
+
+# Sampling Paths
+burn_in1 <- 100
+burn_in2 <- 500
+burn_in3 <- 1e3
+burn_in4 <- 5e3
+burn_in5 <- 1e4
+burn_in6 <- 7e3
+# Reference: https://www.r-bloggers.com/setting-graph-margins-in-r-using-the-par-function-and-lots-of-cow-milk/
+par(mfrow = c(3,2), mar=c(5,6,4,2) + 0.1)
+plot(burn_in1:1e5, rho0_sample[burn_in1:1e5,1],
+     type = 'l', ylab = TeX('$x_1^{(t)}$'), xlab = TeX('t'))
+title(main = TeX('$\\rho = 0$, burn-in: 100'))
+plot(burn_in1:1e5, rho0_sample[burn_in1:1e5,2],
+     type = 'l', ylab = TeX('$x_2^{(t)}$'), xlab = TeX('t'))
+cs1 <- cusum(theta_hat = mean(rho0_sample[burn_in1:1e5,1]),
+      mcdata = rho0_sample[burn_in1:1e5,1], burn = burn_in1)
+cs2 <- cusum(theta_hat = mean(rho0_sample[burn_in1:1e5,2]),
+      mcdata = rho0_sample[burn_in1:1e5,2], burn = burn_in1)
+plot(1:nrow(cs1), cs1, main = TeX('Cusum $x_1$'),
+     type = 'l', ylab = 'Cusum', xlab = TeX('t'))
+plot(1:nrow(cs2), cs2, main = TeX('Cusum $x_2$'),
+     type = 'l', ylab = 'Cusum', xlab = TeX('t'))
+lags <- 40
+autocorrelation(mcdata = rho0_sample[burn_in1:1e5,1], lag_i = lags)
+autocorrelation(mcdata = rho0_sample[burn_in1:1e5,2], lag_i = lags)
+
+plot(burn_in2:1e5, rho1_sample[burn_in2:1e5,1],
+     type = 'l', ylab = TeX('$x_1^{(t)}$'), xlab = TeX('t'))
+title(main = TeX('$\\rho = 0.1$, burn-in: 500'))
+plot(burn_in2:1e5, rho1_sample[burn_in2:1e5,2],
+     type = 'l', ylab = TeX('$x_2^{(t)}$'), xlab = TeX('t'))
+cs3 <- cusum(theta_hat = mean(rho1_sample[burn_in2:1e5,1]),
+             mcdata = rho1_sample[burn_in2:1e5,1], burn = burn_in2)
+cs4 <- cusum(theta_hat = mean(rho1_sample[burn_in2:1e5,2]),
+             mcdata = rho1_sample[burn_in2:1e5,2], burn = burn_in2)
+plot(1:nrow(cs3), cs3, main = TeX('Cusum $x_1$'),
+     type = 'l', ylab = 'Cusum', xlab = TeX('t'))
+plot(1:nrow(cs4), cs4, main = TeX('Cusum $x_2$'),
+     type = 'l', ylab = 'Cusum', xlab = TeX('t'))
+autocorrelation(mcdata = rho1_sample[burn_in2:1e5,1], lag_i = lags)
+autocorrelation(mcdata = rho1_sample[burn_in2:1e5,2], lag_i = lags)
+
+plot(burn_in3:1e5, rho2_sample[burn_in3:1e5,1],
+     type = 'l', ylab = TeX('$x_1^{(t)}$'), xlab = TeX('t'))
+title(main = TeX('$\\rho = 0.2$, burn-in: 1,000'))
+plot(burn_in3:1e5, rho2_sample[burn_in3:1e5,2],
+     type = 'l', ylab = TeX('$x_2^{(t)}$'), xlab = TeX('t'))
+cs5 <- cusum(theta_hat = mean(rho2_sample[burn_in3:1e5,1]),
+             mcdata = rho2_sample[burn_in3:1e5,1], burn = burn_in3)
+cs6 <- cusum(theta_hat = mean(rho2_sample[burn_in3:1e5,2]),
+             mcdata = rho2_sample[burn_in3:1e5,2], burn = burn_in3)
+plot(1:nrow(cs5), cs5, main = TeX('Cusum $x_1$'),
+     type = 'l', ylab = 'Cusum', xlab = TeX('t'))
+plot(1:nrow(cs6), cs6, main = TeX('Cusum $x_2$'),
+     type = 'l', ylab = 'Cusum', xlab = TeX('t'))
+autocorrelation(mcdata = rho2_sample[burn_in3:1e5,1], lag_i = lags)
+autocorrelation(mcdata = rho2_sample[burn_in3:1e5,2], lag_i = lags)
+
+plot(burn_in4:1e5, rho3_sample[burn_in4:1e5,1],
+     type = 'l', ylab = TeX('$x_1^{(t)}$'), xlab = TeX('t'))
+title(main = TeX('$\\rho = 0.3$, burn-in: 5,000'))
+plot(burn_in4:1e5, rho3_sample[burn_in4:1e5,2],
+     type = 'l', ylab = TeX('$x_2^{(t)}$'), xlab = TeX('t'))
+cs7 <- cusum(theta_hat = mean(rho3_sample[burn_in4:1e5,1]),
+             mcdata = rho3_sample[burn_in4:1e5,1], burn = burn_in4)
+cs8 <- cusum(theta_hat = mean(rho3_sample[burn_in4:1e5,2]),
+             mcdata = rho3_sample[burn_in4:1e5,2], burn = burn_in4)
+plot(1:nrow(cs7), cs7, main = TeX('Cusum $x_1$'),
+     type = 'l', ylab = 'Cusum', xlab = TeX('t'))
+plot(1:nrow(cs8), cs8, main = TeX('Cusum $x_2$'),
+     type = 'l', ylab = 'Cusum', xlab = TeX('t'))
+autocorrelation(mcdata = rho3_sample[burn_in4:1e5,1], lag_i = lags)
+autocorrelation(mcdata = rho3_sample[burn_in4:1e5,2], lag_i = lags)
+
+plot(burn_in5:1e5, rho4_sample[burn_in5:1e5,1],
+     type = 'l', ylab = TeX('$x_1^{(t)}$'), xlab = TeX('t'))
+title(main = TeX('$\\rho = 0.4$, burn-in: 10,000'))
+plot(burn_in5:1e5, rho4_sample[burn_in5:1e5,2],
+     type = 'l', ylab = TeX('$x_2^{(t)}$'), xlab = TeX('t'))
+cs9 <- cusum(theta_hat = mean(rho4_sample[burn_in5:1e5,1]),
+             mcdata = rho4_sample[burn_in5:1e5,1], burn = burn_in5)
+cs10 <- cusum(theta_hat = mean(rho4_sample[burn_in5:1e5,2]),
+             mcdata = rho4_sample[burn_in5:1e5,2], burn = burn_in5)
+plot(1:nrow(cs9), cs9, main = TeX('Cusum $x_1$'),
+     type = 'l', ylab = 'Cusum', xlab = TeX('t'))
+plot(1:nrow(cs10), cs10, main = TeX('Cusum $x_2$'),
+     type = 'l', ylab = 'Cusum', xlab = TeX('t'))
+autocorrelation(mcdata = rho4_sample[burn_in5:1e5,1], lag_i = lags)
+autocorrelation(mcdata = rho4_sample[burn_in5:1e5,2], lag_i = lags)
+
+plot(burn_in6:1e5, rho5_sample[burn_in6:1e5,1],
+     type = 'l', ylab = TeX('$x_1^{(t)}$'), xlab = TeX('t'))
+title(main = TeX('$\\rho = 0.5$, burn-in: 7,000'))
+plot(burn_in6:1e5, rho5_sample[burn_in6:1e5,2],
+     type = 'l', ylab = TeX('$x_2^{(t)}$'), xlab = TeX('t'))
+cs11 <- cusum(theta_hat = mean(rho5_sample[burn_in6:1e5,1]),
+             mcdata = rho5_sample[burn_in6:1e5,1], burn = burn_in6)
+cs12 <- cusum(theta_hat = mean(rho5_sample[burn_in6:1e5,2]),
+              mcdata = rho5_sample[burn_in6:1e5,2], burn = burn_in6)
+plot(1:nrow(cs11), cs11, main = TeX('Cusum $x_1$'),
+     type = 'l', ylab = 'Cusum', xlab = TeX('t'))
+plot(1:nrow(cs12), cs12, main = TeX('Cusum $x_2$'),
+     type = 'l', ylab = 'Cusum', xlab = TeX('t'))
+autocorrelation(mcdata = rho5_sample[burn_in6:1e5,1], lag_i = lags)
+autocorrelation(mcdata = rho5_sample[burn_in6:1e5,2], lag_i = lags)
+
+### Problem 3
+# part (a)
+mcdata1 <- scan(file.choose())
+mcdata2 <- scan(file.choose())
+
+par(mfrow = c(2,1), mar=c(5,6,4,2) + 0.1)
+plot(1:length(mcdata1), mcdata1, main = 'MCdata1',
+     type = 'l', ylab = TeX('$x_1^{(t)}$'), xlab = TeX('t'))
+plot(1:length(mcdata2), mcdata2, main = 'MCdata2',
+     type = 'l', ylab = TeX('$x_1^{(t)}$'), xlab = TeX('t'))
+dev.off()
+
+# part (b)
+burn_in1 <- 5001
+burn_in2 <- 10001
+theta_hat1 <- mean(mcdata1[burn_in1:length(mcdata1)])
+theta_hat2 <- mean(mcdata2[burn_in2:length(mcdata2)])
+
+cusum <- function(theta_hat=theta_hat1, mcdata=mcdata1, burn=burn_in) {
+  cusum_data <- matrix(NA, nrow = length(mcdata) - burn + 1)
+  cusum_diff <- matrix(NA, nrow = length(mcdata) - burn + 1)
+  mcdata <- mcdata[burn:length(mcdata)]
+  for (i in 1:length(mcdata)) {
+    cusum_diff[i] <- mcdata[i] - theta_hat
+    cusum_data[i] <- sum(cusum_diff, na.rm = TRUE)
+  }
+  return(cusum_data)
+}
+
+cs_1 <- cusum(theta_hat = theta_hat1, mcdata = mcdata1, burn = burn_in1)
+cs_2 <- cusum(theta_hat = theta_hat2, mcdata = mcdata2, burn = burn_in2)
+
+par(mfrow = c(2,1))
+plot(1:nrow(cs_1), cs_1, main = 'Cusum MCdata1',
+     type = 'l', ylab = 'Cusum', xlab = TeX('t'))
+plot(1:nrow(cs_2), cs_2, main = 'Cusum MCdata2',
+     type = 'l', ylab = 'Cusum', xlab = TeX('t'))
+dev.off()
+
+# part (c)
+C_i <- function(mcdata=mcdata1, i=40) {
+  n <- length(mcdata)
+  xbar <- mean(mcdata)
+  autocovariance_matrix <- matrix(NA, nrow = (n - i))
+  for (t in 1:(n - i)) {
+    autocovariance_matrix[t] <- (mcdata[t] - xbar) *
+      (mcdata[t + i] - xbar)
+  }
+  mean(autocovariance_matrix)
+}
+
+C_0 <- function(mcdata=mcdata1) {
+  xbar <- mean(mcdata)
+  mean((mcdata - xbar)^2)
+}
+
+autocorrelation <- function(mcdata=mcdata1, lag_i=40) {
+  c_0 <- C_0(mcdata = mcdata)
+  acf_matrix <- matrix(NA, nrow = lag_i)
+  for (i in 1:lag_i) {
+    c_i <- C_i(mcdata=mcdata, i=i)
+    acf_matrix[i] <- c_i / c_0
+  }
+  plot(1:lag_i, acf_matrix, ylim = c(0,1),
+       pch = 19, xlab = 'Lags', ylab = 'acf')
+  segments(x0 = 1:lag_i, y0 = 0, x1 = 1:lag_i, y1 = acf_matrix)
+  abline(h = 0)
+}
+
+lags <- 40
+par(mfrow = c(2,1))
+acf1 <- autocorrelation(mcdata = mcdata1, lag_i = lags)
+title('ACF of MCdata1')
+acf2 <- autocorrelation(mcdata = mcdata2, lag_i = lags)
+title('ACF of MCdata2')
+dev.off()
+
+### Problem 4
+# part (a)
+mc1 <- scan(file.choose())
+mc2 <- scan(file.choose())
+mc3 <- scan(file.choose())
+mc4 <- scan(file.choose())
+mc5 <- scan(file.choose())
+mc6 <- scan(file.choose())
+mc7 <- scan(file.choose())
+
+gelman_rubin <- function(D=0, L=1000, first_part=1000) {
+  J <- 7
+  mc <- cbind(mc1, mc2, mc3, mc4, mc5, mc6, mc7)
+  mc <- mc[1:first_part,]
+  mc <- mc[(D+1):(D+L),]
+
+  xbar_j <- (1 / L) * colSums(mc)
+  xbar <- mean(xbar_j)
+
+  B <- (L / (J - 1)) * sum((xbar_j - xbar)^2)
+  sj2 <- (1 / (L - 1)) * apply(matrix(1:J), 1, function(x) {
+    sum((mc[,x] - xbar_j[x])^2)
+  })
+  W <- mean(sj2)
+  R <- (((L - 1) / L) * W + (1 / L) * B) / W
+  return(c(B, W, sqrt(R)))
+}
+
+# part(a-f)
+gelman_rubin(D = 0, L = 1000)
+gelman_rubin(D = 500, L = 500)
+gelman_rubin(D = 0, L = 500, first_part = 500)
+gelman_rubin(D = 250, L = 250, first_part = 500)
+gelman_rubin(D = 0, L = 50, first_part = 50)
+gelman_rubin(D = 25, L = 25, first_part = 50)
+
+```

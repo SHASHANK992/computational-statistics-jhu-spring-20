@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1587061718319.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1954189693",
+    "id" : "5963D783",
+    "lastKnownWriteTime" : 1583540084,
+    "last_content_update" : 1583540084,
+    "path" : "C:/Users/qizhe/Desktop/JHU/comp_stats/project/proj.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "93,0",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

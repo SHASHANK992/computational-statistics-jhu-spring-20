@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1580150225011.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2275413630",
+    "id" : "36962F20",
+    "lastKnownWriteTime" : 1580160550,
+    "last_content_update" : 1580160550247,
+    "path" : "C:/Users/qizhe/Desktop/JHU/comp_stats/module_1/problem_set/problem_set_1.R",
+    "project_path" : "problem_set_1.R",
+    "properties" : {
+        "cursorPosition" : "71,23",
+        "scrollLine" : "67",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

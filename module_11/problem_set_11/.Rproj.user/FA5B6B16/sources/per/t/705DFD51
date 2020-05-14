@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1587059725254.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "5|87|23|0|\n29|33|32|0|\n37|79|48|0|\n66|55|87|0|\n120|68|138|0|\n142|77|158|0|\n162|24|164|0|\n167|29|169|0|\n172|26|174|0|\n",
+    "hash" : "3592615706",
+    "id" : "705DFD51",
+    "lastKnownWriteTime" : 1587399972,
+    "last_content_update" : 1587399972056,
+    "path" : "C:/Users/qizhe/Desktop/JHU/comp_stats/module_11/problem_set_11/ps11.R",
+    "project_path" : "ps11.R",
+    "properties" : {
+        "cursorPosition" : "4,0",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
