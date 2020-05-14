@@ -1,0 +1,33 @@
+# Fig. 1
+par(mfrow = c(1,2))
+hist(faithful$waiting, main = 'Frequency Histogram of Waiting Times Between Eruptions',
+     xlab = 'Time Between Eruptions (minutes)')
+hist(faithful$waiting, main = 'Density Histogram Waiting Times Between Eruptions',
+     xlab = 'Time Between Eruptions (minutes)', freq = FALSE)
+lines(density(faithful$waiting))
+dev.off()
+
+### sum to 1
+n <- length(faithful$waiting)
+v_k <- hist(faithful$waiting, freq = FALSE)$breaks[2] -
+  hist(faithful$waiting, freq = FALSE)$breaks[1]
+f_hats <- hist(faithful$waiting, freq = FALSE)$density
+n_k <- hist(faithful$waiting, freq = FALSE)$counts
+p_k <- f_hats * v_k
+sum((n_k / (n * v_k)) * v_k)
+sum((p_k / v_k) * v_k)
+sum(f_hats * v_k)
+
+# histogram settings for mathisfun
+m <- 1
+h <- 50
+100 + m * h
+100 + (m + 1) * h
+
+# Fig. 3
+par(mfrow = c(1,2))
+hist(faithful$waiting, main = 'Frequency Histogram of Waiting Times Between Eruptions (breaks=default)',
+     xlab = 'Time Between Eruptions (minutes)')
+hist(faithful$waiting, main = 'Frequency Histogram of Waiting Times Between Eruptions (breaks=20)',
+     xlab = 'Time Between Eruptions (minutes)', breaks = 20)
+

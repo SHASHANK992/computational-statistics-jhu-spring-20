@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1586567205455.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4074354382",
+    "id" : "5CD390DD",
+    "lastKnownWriteTime" : 1587763562,
+    "last_content_update" : 1587763562995,
+    "path" : "C:/Users/qizhe/Desktop/JHU/comp_stats/project/intro.R",
+    "project_path" : "intro.R",
+    "properties" : {
+        "cursorPosition" : "21,6",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

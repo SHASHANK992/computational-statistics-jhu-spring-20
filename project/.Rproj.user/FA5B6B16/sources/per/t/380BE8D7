@@ -1,0 +1,24 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1587947134210.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "200|44|217|0|\n242|41|247|0|\n261|79|285|0|\n290|44|296|0|\n303|52|306|0|\n",
+    "hash" : "2395526407",
+    "id" : "380BE8D7",
+    "lastKnownWriteTime" : 1588394786,
+    "last_content_update" : 1588394786679,
+    "path" : "C:/Users/qizhe/Desktop/JHU/comp_stats/module_11/problem_set_11/computational_piece.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "533,0",
+        "docOutlineVisible" : "0",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 9,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

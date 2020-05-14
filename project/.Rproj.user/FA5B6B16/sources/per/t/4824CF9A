@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1588460954776.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "31|45|63|0|\n",
+    "hash" : "1347395103",
+    "id" : "4824CF9A",
+    "lastKnownWriteTime" : 1588475301,
+    "last_content_update" : 1588475735031,
+    "path" : "C:/Users/qizhe/Desktop/JHU/comp_stats/project/closed_form2.R",
+    "project_path" : "closed_form2.R",
+    "properties" : {
+        "cursorPosition" : "31,0",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 11,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

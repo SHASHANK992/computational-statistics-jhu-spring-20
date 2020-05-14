@@ -1,0 +1,24 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1588547403813.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3453746892",
+    "id" : "37203829",
+    "lastKnownWriteTime" : 1588570660,
+    "last_content_update" : 1588570660575,
+    "path" : "C:/Users/qizhe/Desktop/JHU/comp_stats/project/code_rmd.Rmd",
+    "project_path" : "code_rmd.Rmd",
+    "properties" : {
+        "cursorPosition" : "815,31",
+        "scrollLine" : "798",
+        "tempName" : "Untitled1",
+        "working_dir" : "project"
+    },
+    "relative_order" : 12,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

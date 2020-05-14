@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1588216792834.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "884161707",
+    "id" : "E2A96797",
+    "lastKnownWriteTime" : 1588547393,
+    "last_content_update" : 1588547393926,
+    "path" : "C:/Users/qizhe/Desktop/JHU/comp_stats/project/kde_rmd.Rmd",
+    "project_path" : "kde_rmd.Rmd",
+    "properties" : {
+        "cursorPosition" : "10,13",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 9,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
