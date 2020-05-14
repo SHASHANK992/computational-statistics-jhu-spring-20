@@ -8,3 +8,4 @@ This repo contains course work completed for the Computational Statistics course
   - The final assignment can be seen as Yu-PS(#).pdf and the code is ps(#).R.
   
 - project: Contains the data, R code of the final project (PowerPoint presentation too large for GitHub).
+  - The final project presentation can be viewed via [YouTube](https://www.youtube.com/watch?v=FWyuVph7NqM)
